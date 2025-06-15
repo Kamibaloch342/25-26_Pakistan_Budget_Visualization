@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gender-Sensitive Budget Allocation Analysis (Final)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --bg-color: #1a1a2e;
+            --container-color: #16213e;
+            --font-color: #e0e0e0;
+            --primary-accent: #0f3460;
+            --highlight-color-start: #4299e1; /* Blue for FY24-25 */
+            --highlight-color-end: #e53e3e;   /* Red for FY25-26 */
+            --line-color: rgba(224, 224, 224, 0.2);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--font-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .svg-defs {
+            position: absolute; width: 0; height: 0; overflow: hidden;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--container-color);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--primary-accent);
+        }
+
+        .chart-header { text-align: center; }
+        .chart-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(90deg, var(--highlight-color-start), var(--highlight-color-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .chart-header p {
+            font-size: 1rem;
+            font-weight: 300;
+            margin-top: 8px;
+            margin-bottom: 40px;
+            opacity: 0.8;
+        }
+
+        /* Main chart layout using CSS Grid */
+        .chart-layout {
+            display: grid;
+            grid-template-columns: auto 1fr auto; /* Y-Labels | Plot Area | Change Labels */
+            align-items: center;
+            gap: 20px;
+        }
+
+        .y-axis-labels, .change-labels {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            gap: 85px; /* Spacing between rows */
+            height: 100%;
+        }
+
+        .category-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            white-space: nowrap;
+        }
+        .category-icon {
+            width: 24px; height: 24px; fill: var(--font-color); opacity: 0.8;
+        }
+        
+        .plot-area {
+            position: relative;
+        }
+
+        .data-row {
+            position: relative;
+            height: 120px; /* Increased height for better spacing */
+        }
+
+        .slope-line {
+            position: absolute;
+            height: 3px;
+            background: var(--line-color);
+            top: 50%;
+            left: 20%; /* Start at 20% of the plot area */
+            width: 60%; /* Span 60% of the plot area */
+            transform-origin: left center;
+            transition: all 0.4s ease;
+            animation: drawLine 1.5s 0.5s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+        }
+        
+        .data-point {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            border: 3px solid #fff;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            transition: transform 0.3s ease;
+            z-index: 2;
+        }
+        
+        .point-start { animation-delay: 1.8s; left: 20%; }
+        .point-end { animation-delay: 2s; left: 80%; }
+
+        .data-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-size: 0.9rem;
+            font-weight: 600;
+            opacity: 0;
+            animation: fadeIn 0.5s 2.2s ease forwards;
+            top: -30px;
+        }
+        
+        .change-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(255,255,255,0.05);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--line-color);
+            opacity: 0;
+            animation: fadeIn 1s 2.5s ease forwards;
+        }
+        
+        .decrease-icon {
+            width: 20px; height: 20px; fill: var(--highlight-color-end);
+        }
+        .change-text {
+            font-size: 1.1rem; font-weight: 600; color: #fff; white-space: nowrap;
+        }
+
+        .x-axis {
+            position: relative;
+            height: 20px;
+            margin-top: 10px;
+            border-top: 1px solid var(--line-color);
+        }
+        .x-axis-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--font-color);
+            opacity: 0.7;
+        }
+        
+        .chart-layout:hover .slope-line { background: var(--line-color); } /* Reset on parent hover */
+        .data-row:hover .slope-line {
+            background: linear-gradient(to right, var(--highlight-color-start), var(--highlight-color-end));
+            height: 4px;
+        }
+        .data-row:hover .data-point { transform: translate(-50%, -50%) scale(1.3); }
+
+        @keyframes drawLine { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        @keyframes popIn { from { transform: translate(-50%, -50%) scale(0); } to { transform: translate(-50%, -50%) scale(1); } }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+    </style>
+</head>
+<body>
+    <svg class="svg-defs">
+        <defs>
+            <symbol id="icon-building" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"/></symbol>
+            <symbol id="icon-gears" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></symbol>
+            <symbol id="icon-arrow-down" viewBox="0 0 24 24"><path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"/></symbol>
+        </defs>
+    </svg>
+
+    <div class="chart-container">
+        <div class="chart-header">
+            <h1>Budget Allocation Shift</h1>
+            <p>A comparative view of gender-sensitive budget allocations, highlighting a decreased focus.</p>
+        </div>
+
+        <div class="chart-layout">
+            <div class="y-axis-labels">
+                <div class="category-label">
+                    <svg class="category-icon"><use xlink:href="#icon-building"></use></svg>
+                    <span>Running of Civil Government</span>
+                </div>
+                <div class="category-label">
+                    <svg class="category-icon"><use xlink:href="#icon-gears"></use></svg>
+                    <span>Public Sector Development Programme</span>
+                </div>
+            </div>
+
+            <div class="plot-area">
+                <div class="data-row">
+                    <div class="slope-line"></div>
+                    <div class="point-start data-point" style="background-color: var(--highlight-color-start);">
+                         <div class="data-label">9.8%</div>
+                    </div>
+                    <div class="point-end data-point" style="background-color: var(--highlight-color-end);">
+                         <div class="data-label">9.2%</div>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div class="slope-line"></div>
+                    <div class="point-start data-point" style="background-color: var(--highlight-color-start);">
+                        <div class="data-label">7.4%</div>
+                    </div>
+                    <div class="point-end data-point" style="background-color: var(--highlight-color-end);">
+                        <div class="data-label">6.9%</div>
+                    </div>
+                </div>
+                <div class="x-axis">
+                    <div class="x-axis-label" style="left: 20%;">FY2024-25</div>
+                    <div class="x-axis-label" style="left: 80%;">FY2025-26</div>
+                </div>
+            </div>
+
+            <div class="change-labels">
+                <div class="change-box">
+                    <svg class="decrease-icon"><use xlink:href="#icon-arrow-down"></use></svg>
+                    <span class="change-text">-0.6 pts</span>
+                </div>
+                <div class="change-box">
+                    <svg class="decrease-icon"><use xlink:href="#icon-arrow-down"></use></svg>
+                    <span class="change-text">-0.5 pts</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
