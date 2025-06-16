@@ -211,6 +211,123 @@
         @keyframes drawLine { from { transform: scaleX(0); } to { transform: scaleX(1); } }
         @keyframes popIn { from { transform: translate(-50%, -50%) scale(0); } to { transform: translate(-50%, -50%) scale(1); } }
         @keyframes fadeIn { to { opacity: 1; } }
+
+        /* --- NEW SANKEY CHART CSS START --- */
+        #budget-flow-sankey h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 5px var(--primary-glow);
+        }
+
+        #budget-flow-sankey h2 svg {
+            margin-right: 0.75rem;
+            color: var(--primary-glow);
+        }
+
+        #budget-flow-sankey #sankey-chart-area {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            position: relative;
+            padding: 20px 0;
+            min-height: 800px;
+        }
+        #budget-flow-sankey #sankey-paths-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: visible;
+        }
+        #budget-flow-sankey .sankey-path {
+            fill: none;
+            transition: opacity 0.3s ease;
+            stroke-linecap: round;
+        }
+        #budget-flow-sankey #sankey-chart-area.is-highlighted .sankey-path {
+            opacity: 0.1;
+        }
+        #budget-flow-sankey #sankey-chart-area .sankey-path.is-active {
+            opacity: 1 !important;
+        }
+        #budget-flow-sankey .sankey-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            justify-content: center;
+            z-index: 10; /* Nodes appear above paths */
+        }
+        #budget-flow-sankey .sankey-node {
+            background-color: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+        }
+        #budget-flow-sankey #sankey-chart-area.is-highlighted .sankey-node {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+        #budget-flow-sankey #sankey-chart-area .sankey-node.is-active {
+            opacity: 1 !important;
+            transform: scale(1.05);
+            border-color: var(--primary-glow) !important;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+        #budget-flow-sankey .sankey-node .node-title {
+            font-weight: 600;
+            color: #cbd5e1;
+            font-size: 0.9em;
+        }
+        #budget-flow-sankey .sankey-node .node-value {
+            font-weight: 800;
+            font-size: 1.25em;
+            color: #f1f5f9;
+        }
+        #budget-flow-sankey .sankey-node .node-value::before {
+            content: 'Rs. ';
+            font-size: 0.7em;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+        #budget-flow-sankey .sankey-node .node-value::after {
+            content: ' Bn';
+            font-size: 0.7em;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+
+        /* Specific node placements using grid-column and grid-row */
+        #budget-flow-sankey #node-total-revenue { grid-row: 2 / span 4; }
+        #budget-flow-sankey #node-total-borrowing { grid-row: 6 / span 3; }
+        #budget-flow-sankey #node-total-spend { grid-row: 1 / span 9; }
+        #budget-flow-sankey #node-provinces { grid-row: 1 / span 4; }
+        #budget-flow-sankey #node-federal-budget { grid-row: 5 / span 5; }
+        #budget-flow-sankey #node-current-spend { grid-row: 3 / span 4; }
+        #budget-flow-sankey #node-dev-spend { grid-row: 8 / span 2; }
+
+        /* Specific Node Colors */
+        #budget-flow-sankey #node-tax-revenue, #budget-flow-sankey #node-non-tax-revenue { border-left: 4px solid #4ade80; }
+        #budget-flow-sankey #node-privatization { border-left: 4px solid #facc15; }
+        #budget-flow-sankey #node-domestic-borrow, #budget-flow-sankey #node-foreign-borrow { border-left: 4px solid #f87171; }
+        #budget-flow-sankey #node-interest, #budget-flow-sankey #node-pension, #budget-flow-sankey #node-subsidies { border-right: 4px solid #ef4444; }
+        #budget-flow-sankey #node-defense { border-right: 4px solid #60a5fa; }
+        #budget-flow-sankey #node-psdp, #budget-flow-sankey #node-lending { border-right: 4px solid #22c55e; }
+        /* --- NEW SANKEY CHART CSS END --- */
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
@@ -226,7 +343,6 @@
     <div class="aurora-bg"></div>
     <div class="max-w-7xl mx-auto">
         
-        <!-- MODIFIED: Header uses new animation classes instead of reveal -->
         <header class="text-center my-16 flex items-center justify-center space-x-8">
             <img src="https://sdpi.org/assets/images/sdpi-logo-2020.webp" alt="SDPI Logo" class="h-35 w-35 animate-zoom-in" style="animation-delay: 0.1s;" onerror="this.onerror=null;this.src='https://placehold.co/112x112/0f172a/e2e8f0?text=Logo';">
             <div class="text-left">
@@ -240,13 +356,10 @@
             <div class="lg:col-span-2 space-y-8">
                 <div class="card reveal">
                     <h2>
-                        <!-- MODIFIED: Added icon-jiggle class for hover animation -->
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 icon-jiggle" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         Key Directives & Fiscal Summary
                     </h2>
-                    <!-- MODIFIED: List items will be animated by JavaScript -->
                     <ul class="space-y-4 text-slate-300 text-base">
-                        <!-- MODIFIED: Figure updated to Trillion -->
                         <li class="flex items-start"><span class="mr-4 text-sky-400 mt-1">➔</span><span><strong class="text-white">Total Outlay:</strong> Set at <strong class="text-sky-300">Rs 17.57 Tr</strong>, a 6.9% decrease from the previous fiscal year.</span></li>
                         <li class="flex items-start"><span class="mr-4 text-sky-400 mt-1">➔</span><span><strong class="text-white">Digital Overhaul:</strong> Simplified digital tax filing with <strong class="text-sky-300">AI-driven systems</strong> for evasion monitoring.</span></li>
                         <li class="flex items-start"><span class="mr-4 text-sky-400 mt-1">➔</span><span><strong class="text-white">New Levies:</strong> Introduction of <strong class="text-sky-300">18% GST</strong> on solar panels & e-commerce, plus a carbon levy.</span></li>
@@ -255,12 +368,10 @@
                 </div>
                 <div class="card reveal">
                     <h2>
-                        <!-- MODIFIED: Added icon-spin class for hover animation -->
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 icon-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5" /></svg>
                         Core Expenditure Quadrants (The 4Ds)
                     </h2>
                     <div class="grid grid-cols-2 gap-6">
-                        <!-- MODIFIED: Increased font size and added "Bn" suffix -->
                         <div class="stat-card"><p class="text-slate-400 text-sm">Debt Interest</p><p class="text-4xl font-bold text-red-400" data-count="8207">0 <span class="text-2xl font-semibold">Bn</span></p></div>
                         <div class="stat-card"><p class="text-slate-400 text-sm">Defence</p><p class="text-4xl font-bold text-sky-400" data-count="2550">0 <span class="text-2xl font-semibold">Bn</span></p></div>
                         <div class="stat-card"><p class="text-slate-400 text-sm">Day-to-Day Gov</p><p class="text-4xl font-bold text-indigo-400" data-count="2026">0 <span class="text-2xl font-semibold">Bn</span></p></div>
@@ -268,7 +379,6 @@
                     </div>
                     <div class="mt-6 text-center border-t border-slate-700 pt-4">
                         <p class="text-slate-400">Total Current Expenditures</p>
-                        <!-- MODIFIED: Increased font size -->
                         <p class="text-5xl font-extrabold text-white" data-count="15897">0</p>
                         <p class="text-lg font-medium text-slate-500">Billion PKR</p>
                     </div>
@@ -280,7 +390,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     Primary Challenges
                 </h2>
-                <!-- MODIFIED: List items will be animated by JavaScript -->
                 <ul class="space-y-4 text-slate-300">
                     <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong class="text-white">Economic Pressure:</strong> Risk of rising poverty and unemployment.</span></li>
                     <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong class="text-white">Enforcement Gap:</strong> Policy implementation remains a critical hurdle.</span></li>
@@ -294,6 +403,77 @@
             </div>
         </div>
 
+        <div class="card mt-8 reveal" id="budget-flow-sankey">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h3m3 0h3m3 0h3m3 0h3M5 12V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-5Z"/></svg>
+                Pakistan Budget 2025-26: The Flow of Funds (Figures in Rs. Billion)
+            </h2>
+            <div id="sankey-chart-area">
+                <svg id="sankey-paths-svg"></svg>
+                <div class="sankey-column" style="grid-column: 1;">
+                    <div class="sankey-node" id="node-tax-revenue" data-value="14131" data-stream="revenue">
+                        <span class="node-title">Tax Revenue</span><span class="node-value">14,131</span>
+                    </div>
+                    <div class="sankey-node" id="node-non-tax-revenue" data-value="5147" data-stream="revenue">
+                        <span class="node-title">Non-Tax Revenue</span><span class="node-value">5,147</span>
+                    </div>
+                    <div class="sankey-node" id="node-privatization" data-value="86" data-stream="revenue">
+                        <span class="node-title">Privatization</span><span class="node-value">86</span>
+                    </div>
+                    <div class="sankey-node" id="node-domestic-borrow" data-value="6505" data-stream="borrowing">
+                        <span class="node-title">Domestic Borrowing</span><span class="node-value">6,505</span>
+                    </div>
+                    <div class="sankey-node" id="node-foreign-borrow" data-value="106" data-stream="borrowing">
+                        <span class="node-title">Foreign Borrowing</span><span class="node-value">106</span>
+                    </div>
+                </div>
+                <div class="sankey-column" style="grid-column: 2;">
+                    <div class="sankey-node" id="node-total-revenue" data-value="19278" data-stream="revenue">
+                        <span class="node-title">Total Revenue</span><span class="node-value">19,278</span>
+                    </div>
+                    <div class="sankey-node" id="node-total-borrowing" data-value="6611" data-stream="borrowing">
+                        <span class="node-title">Total Borrowing</span><span class="node-value">6,611</span>
+                    </div>
+                </div>
+                    <div class="sankey-column" style="grid-column: 3;">
+                    <div class="sankey-node" id="node-total-spend" data-value="25865" data-stream="spend">
+                        <span class="node-title">Total Spend</span><span class="node-value">25,865</span>
+                    </div>
+                </div>
+                    <div class="sankey-column" style="grid-column: 4;">
+                    <div class="sankey-node" id="node-provinces" data-value="8206" data-stream="provinces">
+                        <span class="node-title">To Provinces</span><span class="node-value">8,206</span>
+                    </div>
+                    <div class="sankey-node" id="node-federal-budget" data-value="17573" data-stream="federal">
+                        <span class="node-title">Federal Budget</span><span class="node-value">17,573</span>
+                    </div>
+                </div>
+                    <div class="sankey-column" style="grid-column: 5;">
+                    <div class="sankey-node" id="node-punjab" data-value="4076" data-stream="provinces"><span class="node-title">Punjab</span><span class="node-value">4,076</span></div>
+                    <div class="sankey-node" id="node-sindh" data-value="2044" data-stream="provinces"><span class="node-title">Sindh</span><span class="node-value">2,044</span></div>
+                    <div class="sankey-node" id="node-kpk" data-value="1343" data-stream="provinces"><span class="node-title">Khyber Pakhtunkhwa</span><span class="node-value">1,343</span></div>
+                    <div class="sankey-node" id="node-baluchistan" data-value="743" data-stream="provinces"><span class="node-title">Baluchistan</span><span class="node-value">743</span></div>
+                    <div class="sankey-node" id="node-current-spend" data-value="16286" data-stream="federal-current">
+                        <span class="node-title">Current</span><span class="node-value">16,286</span>
+                    </div>
+                    <div class="sankey-node" id="node-dev-spend" data-value="1287" data-stream="federal-dev">
+                        <span class="node-title">Development</span><span class="node-value">1,287</span>
+                    </div>
+                </div>
+                <div class="sankey-column" style="grid-column: 6;">
+                    <div class="sankey-node" id="node-interest" data-value="8207" data-stream="federal-current"><span class="node-title">Interest Payments</span><span class="node-value">8,207</span></div>
+                    <div class="sankey-node" id="node-defense" data-value="2550" data-stream="federal-current"><span class="node-title">Defense</span><span class="node-value">2,550</span></div>
+                    <div class="sankey-node" id="node-pension" data-value="1055" data-stream="federal-current"><span class="node-title">Pension</span><span class="node-value">1,055</span></div>
+                    <div class="sankey-node" id="node-grants" data-value="1928" data-stream="federal-current"><span class="node-title">Grants & Transfers</span><span class="node-value">1,928</span></div>
+                    <div class="sankey-node" id="node-subsidies" data-value="1186" data-stream="federal-current"><span class="node-title">Subsidie</span><span class="node-value">1,186</span></div>
+                    <div class="sankey-node" id="node-running-gov" data-value="971" data-stream="federal-current"><span class="node-title">Running of Govt</span><span class="node-value">971</span></div>
+                    <div class="sankey-node" id="node-emergencies" data-value="389" data-stream="federal-current"><span class="node-title">Emergencies</span><span class="node-value">389</span></div>
+                    <div class="sankey-node" id="node-psdp" data-value="1000" data-stream="federal-dev"><span class="node-title">Federal PSDP</span><span class="node-value">1,000</span></div>
+                    <div class="sankey-node" id="node-lending" data-value="287" data-stream="federal-dev"><span class="node-title">Net Lending</span><span class="node-value">287</span></div>
+                </div>
+            </div>
+        </div>
+
         <div class="card mt-8 reveal">
             <h2>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -302,8 +482,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div class="space-y-4">
                     <div id="sector-details-container">
-                        <!-- Sector details will be injected by JS -->
-                    </div>
+                        </div>
                 </div>
                 <div class="h-96">
                     <canvas id="sectoralAllocationsChart"></canvas>
@@ -510,9 +689,9 @@
                                         {label: 'PSDP', value: 5.41, color: '#64748b'}
                                     ];
                                     const revenueData = [
-                                       {label: 'Indirect Tax', value: 41.86, color: '#6366f1'}, {label: 'Direct Tax', value: 30.94, color: '#a78bfa'},
-                                       {label: 'Civil Admin', value: 14.35, color: '#c084fc'}, {label: 'Property', value: 2.68, color: '#f472b6'},
-                                       {label: 'Levies', value: 0.14, color: '#fb7185'}
+                                        {label: 'Indirect Tax', value: 41.86, color: '#6366f1'}, {label: 'Direct Tax', value: 30.94, color: '#a78bfa'},
+                                        {label: 'Civil Admin', value: 14.35, color: '#c084fc'}, {label: 'Property', value: 2.68, color: '#f472b6'},
+                                        {label: 'Levies', value: 0.14, color: '#fb7185'}
                                     ];
                                     createSankeyFlow('expenditureSankey', 'Expenditure Flow', 'Total Spend', expenditureData, '#ef4444');
                                     createSankeyFlow('revenueSankey', 'Revenue Flow', 'Total Income', revenueData, '#6366f1');
@@ -522,8 +701,8 @@
                             createSocialSpendingChart();
                         }
                         if (entry.target.querySelector('#climateChartROCG')) {
-                           createRadialProgressChart('climateChartROCG', 7.7, 6.9, '#f59e0b'); // Amber color
-                           createRadialProgressChart('climateChartPSDP', 15.3, 8.2, '#10b981'); // Green color
+                            createRadialProgressChart('climateChartROCG', 7.7, 6.9, '#f59e0b'); // Amber color
+                            createRadialProgressChart('climateChartPSDP', 15.3, 8.2, '#10b981'); // Green color
                         }
                         observer.unobserve(entry.target);
                     }
@@ -593,7 +772,6 @@
                 options: {
                     indexAxis: 'y',
                     responsive: true, maintainAspectRatio: false,
-                    // NEW: Added animation for bars to grow from the start
                     animation: {
                         duration: 1200,
                         easing: 'easeOutCubic',
@@ -624,8 +802,8 @@
                     datasets: [
                         { label: '2024-25', data: [3.9, 4.4, 4.1], borderColor: '#f59e0b', tension: 0.4, pointBackgroundColor: '#f59e0b', pointRadius: 5 },
                         { label: '2025-26', data: [4.1, 4.8, 4.5], borderColor: '#22c55e', tension: 0.4, pointBackgroundColor: '#22c55e', pointRadius: 5, 
-                          backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, 'rgba(34, 197, 94, 0)', 'rgba(34, 197, 94, 0.5)'),
-                          fill: true,
+                            backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, 'rgba(34, 197, 94, 0)', 'rgba(34, 197, 94, 0.5)'),
+                            fill: true,
                         }
                     ]
                 },
@@ -665,7 +843,6 @@
                     plugins: {
                         legend: {display: false},
                         datalabels: {
-                            // MODIFIED: Increased font size and added "Bn"
                             formatter: (value) => `${value[0]} Bn → ${value[1]} Bn`,
                             color: 'white',
                             anchor: 'end',
@@ -930,8 +1107,8 @@
                 { range: "0 - 0.6 Mn", old: "Zero Tax", new: "Zero Tax", relief: "No Change", color: "slate" },
                 { range: "0.6 - 1.2 Mn", old: "5% Tax", new: "1% Tax", relief: "Major Relief", color: "green" },
                 { range: "1.2 - 2.2 Mn", old: "30k + 15%", new: "6k + 11%", relief: "Major Relief", color: "green" },
-                { range: "2.2 - 3.2 Mn", old: "180k + 25%", new: "116k + 23%", relief: "Relief", color: "teal" },
-                { range: "3.2 - 4.1 Mn", old: "430k + 30%", new: "346k + 30%", relief: "Relief", color: "teal" },
+                { range: "2.2 - 3.2 Mn", old: "180k + 25%", new: "346k + 23%", relief: "Relief", color: "teal" },
+                { range: "3.2 - 4.1 Mn", old: "430k + 30%", new: "616k + 30%", relief: "Relief", color: "teal" },
                 { range: "4.1 Mn+", old: "700k + 35%", new: "616k + 35%", relief: "Minor Relief", color: "sky" }
             ];
             const slabContainer = document.getElementById('tax-slab-container');
@@ -948,6 +1125,104 @@
                     </div>
                 `;
             });
+
+            // --- NEW SANKEY CHART LOGIC START ---
+            if (document.getElementById('budget-flow-sankey')) {
+                const sankeyLinks = [
+                    { from: 'node-tax-revenue', to: 'node-total-revenue', value: 14131, color: '#4ade80', stream: 'revenue' },
+                    { from: 'node-non-tax-revenue', to: 'node-total-revenue', value: 5147, color: '#4ade80', stream: 'revenue' },
+                    { from: 'node-domestic-borrow', to: 'node-total-borrowing', value: 6505, color: '#f87171', stream: 'borrowing' },
+                    { from: 'node-foreign-borrow', to: 'node-total-borrowing', value: 106, color: '#f87171', stream: 'borrowing' },
+                    { from: 'node-total-revenue', to: 'node-total-spend', value: 19278, color: '#2dd4bf', stream: 'revenue' },
+                    { from: 'node-total-borrowing', to: 'node-total-spend', value: 6611, color: '#fb923c', stream: 'borrowing' },
+                    { from: 'node-privatization', to: 'node-total-spend', value: 86, color: '#facc15', stream: 'revenue' },
+                    { from: 'node-total-spend', to: 'node-provinces', value: 8206, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-total-spend', to: 'node-federal-budget', value: 17573, color: '#c084fc', stream: 'federal' },
+                    { from: 'node-provinces', to: 'node-punjab', value: 4076, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-provinces', to: 'node-sindh', value: 2044, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-provinces', to: 'node-kpk', value: 1343, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-provinces', to: 'node-baluchistan', value: 743, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-federal-budget', to: 'node-current-spend', value: 16286, color: '#60a5fa', stream: 'federal-current' },
+                    { from: 'node-federal-budget', to: 'node-dev-spend', value: 1287, color: '#34d399', stream: 'federal-dev' },
+                    { from: 'node-current-spend', to: 'node-interest', value: 8207, color: '#ef4444', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-defense', value: 2550, color: '#60a5fa', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-pension', value: 1055, color: '#f97316', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-grants', value: 1928, color: '#eab308', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-subsidies', value: 1186, color: '#d946ef', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-running-gov', value: 971, color: '#8b5cf6', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-emergencies', value: 389, color: '#f43f5e', stream: 'federal-current' },
+                    { from: 'node-dev-spend', to: 'node-psdp', value: 1000, color: '#22c55e', stream: 'federal-dev' },
+                    { from: 'node-dev-spend', to: 'node-lending', value: 287, color: '#10b981', stream: 'federal-dev' },
+                ];
+                
+                function drawSankeyPaths() {
+                    const svg = document.querySelector('#budget-flow-sankey #sankey-paths-svg');
+                    const container = document.getElementById('sankey-chart-area');
+                    if (!svg || !container) return;
+                    
+                    svg.innerHTML = ''; 
+                    const containerRect = container.getBoundingClientRect();
+                    const totalValue = 25865; 
+                    const maxStrokeWidth = 60;
+
+                    sankeyLinks.forEach((link) => {
+                        const fromNode = document.getElementById(link.from);
+                        const toNode = document.getElementById(link.to);
+                        if (!fromNode || !toNode) return;
+
+                        const fromRect = fromNode.getBoundingClientRect();
+                        const toRect = toNode.getBoundingClientRect();
+                        
+                        const startX = fromRect.right - containerRect.left;
+                        const startY = fromRect.top - containerRect.top + fromRect.height / 2;
+                        const endX = toRect.left - containerRect.left;
+                        const endY = toRect.top - containerRect.top + toRect.height / 2;
+
+                        const controlX1 = startX + (endX - startX) / 2;
+                        
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path.setAttribute('d', `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX1} ${endY}, ${endX} ${endY}`);
+                        path.setAttribute('stroke', link.color);
+                        path.setAttribute('stroke-width', (link.value / totalValue) * maxStrokeWidth);
+                        path.setAttribute('stroke-opacity', 0.6);
+                        path.classList.add('sankey-path');
+                        path.dataset.stream = link.stream;
+                        svg.appendChild(path);
+                    });
+                }
+
+                function setupSankeyInteractivity() {
+                    const container = document.getElementById('sankey-chart-area');
+                    if(!container) return;
+                    const nodes = container.querySelectorAll('.sankey-node');
+                    const paths = container.querySelectorAll('.sankey-path');
+
+                    const highlightStream = (stream) => {
+                        if (!stream) return;
+                        container.classList.add('is-highlighted');
+                        nodes.forEach(n => n.classList.toggle('is-active', n.dataset.stream === stream || n.dataset.stream === 'spend'));
+                        paths.forEach(p => p.classList.toggle('is-active', p.dataset.stream === stream));
+                    };
+
+                    const clearHighlight = () => {
+                        container.classList.remove('is-highlighted');
+                        nodes.forEach(n => n.classList.remove('is-active'));
+                        paths.forEach(p => p.classList.remove('is-active'));
+                    };
+                    
+                    nodes.forEach(node => {
+                        node.addEventListener('mouseenter', () => highlightStream(node.dataset.stream));
+                        node.addEventListener('mouseleave', clearHighlight);
+                    });
+                }
+                
+                drawSankeyPaths();
+                setupSankeyInteractivity();
+
+                new ResizeObserver(drawSankeyPaths).observe(document.getElementById('sankey-chart-area'));
+            }
+            // --- NEW SANKEY CHART LOGIC END ---
+
         });
     </script>
 </body>
