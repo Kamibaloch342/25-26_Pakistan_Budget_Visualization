@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFLT Phase 2 - Full Deployment Dashboard</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --font-family: 'Montserrat', sans-serif;
+            --bg-color: #F3F4F6;
+            --text-color: #1F2937;
+            --text-muted: #6B7280;
+            --accent-color: #4F46E5;
+            --danger-color: #EF4444;
+            --sidebar-bg: rgba(255, 255, 255, 0.55);
+            --tooltip-bg: rgba(255, 255, 255, 0.8);
+            --item-bg: rgba(255, 255, 255, 0.3);
+            --item-hover-bg: rgba(255, 255, 255, 0.7);
+            --border-color: rgba(255, 255, 255, 0.4);
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --blur-intensity: 15px;
+        }
+
+        body.dark-mode {
+            --bg-color: #111827;
+            --text-color: #F9FAFB;
+            --text-muted: #9CA3AF;
+            --accent-color: #6366F1;
+            --sidebar-bg: rgba(29, 41, 59, 0.5);
+            --tooltip-bg: rgba(29, 41, 59, 0.75);
+            --item-bg: rgba(55, 65, 81, 0.4);
+            --item-hover-bg: rgba(55, 65, 81, 0.8);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --shadow-color: rgba(0, 0, 0, 0.25);
+        }
+
+        html, body {
+            height: 100%; margin: 0; padding: 0;
+            font-family: var(--font-family); color: var(--text-color);
+            overflow: hidden; background-color: var(--bg-color);
+            transition: background-color 0.5s ease;
+        }
+
+        body::before {
+            content: ''; position: absolute; width: 200%; height: 200%;
+            top: -50%; left: -50%; z-index: -1;
+            background: linear-gradient(45deg, rgba(79, 70, 229, 0.15), rgba(99, 102, 241, 0.1), rgba(239, 68, 68, 0.15), rgba(59, 130, 246, 0.15));
+            animation: gradient-pan 25s ease infinite;
+        }
+        body.dark-mode::before {
+            background: linear-gradient(45deg, rgba(79, 70, 229, 0.2), rgba(99, 102, 241, 0.15), rgba(239, 68, 68, 0.1), rgba(14, 165, 233, 0.15));
+        }
+
+        .dashboard-container { position: relative; height: 100vh; width: 100vw; animation: fade-in 0.8s ease; }
+        #map-container { position: absolute; top: 0; left: 0; height: 100%; width: 100%; }
+        #map { width: 100%; height: 100%; background: transparent; }
+        .leaflet-tile-pane { transition: filter 0.5s ease; }
+        .dark-mode .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
+
+        #sidebar {
+            position: absolute; top: 20px; left: 20px; bottom: 20px; width: 380px; z-index: 1001;
+            background: var(--sidebar-bg); backdrop-filter: blur(var(--blur-intensity));
+            border: 1px solid var(--border-color); border-radius: 24px;
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            padding: 25px; display: flex; flex-direction: column; transition: all 0.3s ease;
+        }
+        .sidebar-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;
+        }
+        .sidebar-header h1 { font-size: 28px; font-weight: 800; margin: 0 0 5px 0; color: var(--accent-color); letter-spacing: -1px; }
+        .sidebar-header .subtitle { font-size: 14px; color: var(--text-muted); margin: 0; }
+        #theme-toggle {
+            background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer;
+            padding: 8px 10px; border-radius: 12px; font-size: 16px; transition: all 0.3s ease;
+            flex-shrink: 0; margin-left: 15px;
+        }
+        #theme-toggle:hover { background: var(--item-hover-bg); color: var(--text-color); transform: scale(1.05) rotate(15deg); }
+        #theme-toggle i { transition: transform 0.4s ease; }
+        
+        .sidebar-filters { display: flex; gap: 15px; margin-bottom: 20px; }
+        .filter-group { flex: 1; }
+        .filter-group label { font-weight: 600; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: block; }
+        .filter-group select {
+            width: 100%; padding: 10px; border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--item-bg); color: var(--text-color);
+            font-family: var(--font-family); font-size: 14px;
+            -webkit-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%239ca3af' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
+            cursor: pointer;
+        }
+        
+        #station-list-container { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; }
+        #station-list-container h3 { font-size: 16px; font-weight: 600; margin: 0 0 15px 0; }
+        #station-list { flex-grow: 1; overflow-y: auto; padding-right: 10px; margin-right: -10px; }
+        #station-list::-webkit-scrollbar { width: 5px; }
+        #station-list::-webkit-scrollbar-track { background: transparent; }
+        #station-list::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 10px; }
+
+        .station-item {
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 12px 15px; border-radius: 14px; cursor: pointer; 
+            margin-bottom: 10px; border: 1px solid transparent; background-color: var(--item-bg);
+            transition: all 0.25s ease; opacity: 0;
+        }
+        .station-item:hover { background-color: var(--item-hover-bg); transform: scale(1.03); border-color: var(--border-color); }
+        .station-item.active { background-color: var(--accent-color); color: white; transform: scale(1.04); box-shadow: 0 4px 15px -2px var(--accent-color); }
+        .station-item.active .station-district, .station-item.active .station-meta-item, .station-item.active .value { color: rgba(255, 255, 255, 0.9); }
+        
+        .station-icon { margin-right: 15px; flex-shrink: 0; font-size: 20px; text-align: center; width: 20px; }
+        .station-name { font-weight: 700; font-size: 15px; }
+        .station-district { font-size: 12px; color: var(--text-muted); transition: color 0.25s ease; }
+        .station-meta { text-align: right; }
+        .station-meta-item { font-size: 12px; font-weight: 500; color: var(--text-muted); transition: color 0.25s ease; }
+        .station-meta-item .value { font-weight: 800; color: var(--text-color); transition: color 0.25s ease; }
+
+        .custom-tooltip {
+            background: var(--tooltip-bg); backdrop-filter: blur(var(--blur-intensity));
+            border: 1px solid var(--border-color); box-shadow: 0 8px 32px 0 var(--shadow-color);
+            border-radius: 16px; width: 320px; padding: 0;
+            transform-origin: 0 50%;
+            animation: fade-in-slide-up 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .leaflet-tooltip-content { padding: 0 !important; }
+
+        .tooltip-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); }
+        .tooltip-header .district { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .tooltip-header .name { font-size: 22px; font-weight: 800; color: var(--accent-color); margin: 2px 0 0 0; }
+        
+        .tooltip-body { padding: 15px 20px; }
+        .tooltip-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat { padding: 12px; border-radius: 10px; text-align: center; background: rgba(0,0,0,0.04); }
+        .dark-mode .stat { background: rgba(255,255,255,0.05); }
+        .stat .value { font-weight: 800; font-size: 24px; }
+        .stat .label { font-size: 12px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .stat .label i { margin-right: 5px; }
+
+        .tooltip-trainers h4 { font-size: 13px; margin: 15px 0 10px 0; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .trainer-entry { font-size: 15px; font-weight: 500; margin-bottom: 6px; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,0.05); }
+        .dark-mode .trainer-entry { background: rgba(255,255,255,0.06); }
+        .trainer-entry small { color: var(--text-muted); }
+        .no-trainer-msg { text-align: center; font-size: 13px; color: var(--text-muted); padding: 15px 0; font-style: italic;}
+
+        .hub-marker { position: relative; width: 30px; height: 30px; }
+        .hub-marker::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); width: 14px; height: 14px;
+            background-color: var(--color, var(--accent-color)); border-radius: 50%;
+            border: 2px solid white; box-shadow: 0 0 10px var(--color, var(--accent-color));
+        }
+        .pulse-ring {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); width: 30px; height: 30px;
+            border: 3px solid var(--color, var(--accent-color)); border-radius: 50%;
+            animation: pulse-animation 1.5s cubic-bezier(0.2, 0.8, 0.7, 1) infinite;
+        }
+        
+        .leaflet-marker-icon i { transition: transform 0.2s ease-in-out; }
+        .leaflet-marker-icon:hover i { transform: scale(1.2); }
+
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes gradient-pan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes pulse-animation { 0% { transform: translate(-50%,-50%) scale(1); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; } }
+        @keyframes fade-in-up { from { opacity: 0; transform: translateY(15px); } to   { opacity: 1; transform: translateY(0); } }
+        @keyframes fade-in-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <div>
+                    <h1>Mission Control</h1>
+                    <p class="subtitle" id="sidebar-subtitle">Deployment Overview</p>
+                </div>
+                <button id="theme-toggle" title="Toggle Dark Mode"><i class="fa-solid fa-moon"></i></button>
+            </div>
+            
+            <div class="sidebar-filters">
+                <div class="filter-group">
+                    <label for="zone-filter">ZONE</label>
+                    <select id="zone-filter"></select>
+                </div>
+                <div class="filter-group">
+                    <label for="ic-filter">IC / HUB</label>
+                    <select id="ic-filter"></select>
+                </div>
+            </div>
+
+            <div id="station-list-container">
+                <h3 id="station-list-title"><i class="fa-solid fa-sitemap" style="margin-right:8px; color: var(--accent-color);"></i>Stations</h3>
+                <div id="station-list"></div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const map = L.map('map', { center: [31.5, 73.0], zoom: 7, zoomControl: false });
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(map);
+
+    const deploymentData = {
+        'IC-01':{hub:'Faisalabad',hubCoords:[31.4187,73.0791],color:'#3B82F6',zone:'Central',stations:[{name:'FAISLABAD CITY',district:'Faisalabad',coords:[31.418,73.0754],trainers:[{name:'Syed Hassan Raza',contact:'3216750583'},{name:'Momina Ghaffar',contact:'3187585595'}]},{name:'FAISLABAD SADAR',district:'Faisalabad',coords:[31.453,73.135],trainers:[{name:'NOOR FATIMA',contact:'3497631467'},{name:'Syeda Aiman',contact:'3012838972'}]},{name:'JARANWALA',district:'Faisalabad',coords:[31.3411,73.4283],trainers:[{name:'Aqsa Babar',contact:'3099928651'}]},{name:'SAMMUNDRI',district:'Faisalabad',coords:[31.0667,72.9431],trainers:[{name:'Shagufta Naz',contact:'3073422186'},{name:'Ayesha Parveen',contact:'3227079177'}]},{name:'TANDLIAN WALA',district:'Faisalabad',coords:[30.9833,73.1333],trainers:[{name:'Nadia perveen',contact:'3121670452'}]},{name:'CHINIOT',district:'Chiniot',coords:[31.7209,72.9783],trainers:[{name:'SAJIDA PERVEEN',contact:'3098578749'},{name:'Qandeel Zahra',contact:'3247642826'}]},{name:'LALIAN',district:'Chiniot',coords:[31.8167,72.7833],trainers:[{name:'Zahida Sikandar',contact:'3116643529'}]},{name:'BHAWANA',district:'Chiniot',coords:[31.5675,72.6565],trainers:[{name:'Alia noor',contact:'3414095598'}]},{name:'GOJRA',district:'Toba Tek Singh',coords:[31.1492,72.6797],trainers:[{name:'Umme Rubab',contact:'3046781631'}]},{name:'TOBA TEK SINGH',district:'Toba Tek Singh',coords:[30.9714,72.4828],trainers:[{name:'Tahira Yasmeen',contact:'3053883274'}]},{name:'PIRMAHAL',district:'Toba Tek Singh',coords:[30.7711,72.4386],trainers:[{name:'Saima Munawar',contact:'3436112361'}]},{name:'KAMALIA',district:'Toba Tek Singh',coords:[30.725,72.645],trainers:[{name:'Shakeela Bai',contact:'3001832628'}]},{name:'JHANG',district:'Jhang',coords:[31.2725,72.328],trainers:[{name:'TANIA Shaheen',contact:'3464984059'}]},{name:'SHORKOT',district:'Jhang',coords:[30.85,72.1],trainers:[{name:'Najma Parveen',contact:'3157036634'}]},{name:'18-HAZARI',district:'Jhang',coords:[31.065,71.774],trainers:[{name:'Kausar Parveen',contact:'3444763420'},{name:'Safia Mai',contact:'3136494510'}]},{name:'AHMADPUR SIAL',district:'Jhang',coords:[30.899,71.933],trainers:[{name:'Rubab Bibi',contact:'3251233984'},{name:'Irum Shaheen',contact:'3089198492'}]}]},
+        'IC-02':{hub:'Lahore',hubCoords:[31.5204,74.3587],color:'#EF4444',zone:'Central',stations:[{name:'LAHORE CITY',district:'Lahore',coords:[31.5829,74.3135],trainers:[{name:'ALLAY HAIDER',contact:'3035351956'},{name:'Alisha Sikander',contact:'3354699305'},{name:'SUMRA SAMEENA',contact:'3054176772'},{name:'Tauseef Raza',contact:'3361190093'},{name:'Syeda Malika Bukhari',contact:'3136059211'}]},{name:'LAHORE CANTT 1',district:'Lahore',coords:[31.507,74.3792],trainers:[{name:'Mafia Waris',contact:'3284045592'},{name:'Hijab Zahra',contact:'3274497479'}]},{name:'MODEL TOWN',district:'Lahore',coords:[31.4756,74.3242],trainers:[{name:'Hira Jamal',contact:'3064377214'}]},{name:'SHALIMAR',district:'Lahore',coords:[31.5875,74.3858],trainers:[{name:'Haidar Ali',contact:'3200423728'}]},{name:'SADDAR RAIWIND',district:'Lahore',coords:[31.2492,74.2158],trainers:[{name:'TAYBA Bibi',contact:'3207123015'}]},{name:'SHEIKHUPURA',district:'Sheikhupura',coords:[31.7144,73.9859],trainers:[{name:'Hira Bibi',contact:'3084912978'},{name:'REHAILA Bibi',contact:'3046169112'}]},{name:'MURIDKE',district:'Sheikhupura',coords:[31.8028,74.2536],trainers:[{name:'Nyla BIBI',contact:'3496256859'}]},{name:'FEROZEWALA',district:'Sheikhupura',coords:[31.7025,74.2269],trainers:[{name:'Kashaf zahra',contact:'3283161318'}]},{name:'SHARAK PUR',district:'Sheikhupura',coords:[31.465,73.9167],trainers:[{name:'Iram karamat',contact:'3025753245'}]},{name:'SAFDARABAD',district:'Sheikhupura',coords:[31.9,73.5833],trainers:[{name:'IQRA AKBAR',contact:'3356029781'}]},{name:'KOT RADHA KISHAN',district:'Kasur',coords:[31.1725,74.0997],trainers:[{name:'Hafsa Habib',contact:'3148549338'}]},{name:'PATTOKI',district:'Kasur',coords:[31.0214,73.8464],trainers:[{name:'ZUBAIDA AMEEN',contact:'3186453788'}]},{name:'KASUR',district:'Kasur',coords:[31.1189,74.4458],trainers:[]}]},
+        'IC-03':{hub:'Sahiwal',hubCoords:[30.6706,73.1069],color:'#F97316',zone:'Central',stations:[{name:'SAHIWAL',district:'Sahiwal',coords:[30.6706,73.1069],trainers:[{name:'kousar parveen',contact:'3057981196'}]},{name:'CHICHAWATNI',district:'Sahiwal',coords:[30.5333,72.7],trainers:[{name:'HANAF SHAHZADI',contact:'3486498683'}]},{name:'OKARA',district:'Okara',coords:[30.81,73.4458],trainers:[{name:'Sughran Akram',contact:'3088483334'}]},{name:'RENALA KHURD',district:'Okara',coords:[30.8711,73.6019],trainers:[{name:'Muqaddas Shafiq',contact:'3433827202'},{name:'Samreen Imran',contact:'3078673134'}]},{name:'DEPALPUR',district:'Okara',coords:[30.6708,73.6533],trainers:[{name:'Razia Mustafa',contact:'3047664812'}]},{name:'PAKPATTAN',district:'Pakpattan',coords:[30.3411,73.4053],trainers:[{name:'Kainat Bibi',contact:'3001588685'},{name:'Kashaf Zafar',contact:'3065437768'}]},{name:'ARIFWALA',district:'Pakpattan',coords:[30.2975,73.0683],trainers:[{name:'Fozia Niaz',contact:'3027899846'}]},{name:'NANKANA SAHIB',district:'Nankana Sahib',coords:[31.4492,73.7125],trainers:[{name:'RUBAB Shamoon',contact:'3139846008'},{name:'MUQADAS Bibi',contact:'3265258873'},{name:'ASMAT MUKHTAR',contact:'3054194141'}]},{name:'SHAH KOT',district:'Nankana Sahib',coords:[31.5667,73.4667],trainers:[{name:'SIDRA MEHMOOD',contact:'3061673453'}]},{name:'SANGLA HILL',district:'Nankana Sahib',coords:[31.7167,73.3833],trainers:[{name:'SABAHAT FATIMA',contact:'3288000119'}]}]},
+        'IC-04':{hub:'Rawalpindi',hubCoords:[33.6007,73.0679],color:'#be123c',zone:'North',stations:[{name:'RAWALPINDI',district:'Rawalpindi',coords:[33.6007,73.0679],trainers:[{name:'Maryam Anayat',contact:'3480478723'},{name:'Eman Iftikhar',contact:'3173007916'},{name:'IQRA GHUFRAN',contact:'3442408007'},{name:'Ghazala Jabeen',contact:'3120505827'},{name:'Fozia Rasheed',contact:'3195296902'}]},{name:'TAXILA',district:'Rawalpindi',coords:[33.7461,72.8367],trainers:[{name:'Aneela Kanwal',contact:'3085283027'}]},{name:'GUJAR KHAN',district:'Rawalpindi',coords:[33.253,73.304],trainers:[{name:'Nosheen Akhtar',contact:'3438506729'},{name:'Rizwan Hussain',contact:'3078930179'}]},{name:'KALLAR SAYADDAN',district:'Rawalpindi',coords:[33.4214,73.3853],trainers:[{name:'Faiza Batool',contact:'3065284564'}]},{name:'UC-90 BARAFKHANA',district:'Rawalpindi',coords:[33.61,73.07],trainers:[{name:'Rubina Kousar',contact:'3432271146'}]},{name:'UC-RAIKA MAIRA',district:'Rawalpindi',coords:[33.55,73.05],trainers:[{name:'Noshaba jahangir',contact:'3103271977'},{name:'Misbah Khatoon',contact:'3180829996'},{name:'MUNAWAR SHAN',contact:'3165407342'}]},{name:'ATTOCK',district:'Attock',coords:[33.7667,72.3667],trainers:[{name:'NAZIA SAJJID',contact:'3355593092'}]},{name:'FATEH JANG',district:'Attock',coords:[33.5664,72.6422],trainers:[{name:'Fozia Iqbal',contact:'3130013643'},{name:'SHEHLA AQIL',contact:'3095976683'}]},{name:'PINDI GHEB',district:'Attock',coords:[33.2422,72.2656],trainers:[{name:'SARWAT FATIMA',contact:'3145069491'}]},{name:'JAND',district:'Attock',coords:[33.4364,72.0171],trainers:[{name:'Tania Mehboob',contact:'3105836717'}]},{name:'MURREE',district:'Murree',coords:[33.9069,73.3917],trainers:[{name:'Bushra Moeen',contact:'3145995430'}]}]},
+        'IC-05':{hub:'Sargodha',hubCoords:[32.0836,72.6711],color:'#9333EA',zone:'North',stations:[{name:'SARGODHA',district:'Sargodha',coords:[32.0836,72.6711],trainers:[{name:'Nasreen Fatima',contact:'3410083374'}]},{name:'BHALWAL',district:'Sargodha',coords:[32.2656,72.8994],trainers:[{name:'Maria Rehman',contact:'3257956466'}]},{name:'BHERA',district:'Sargodha',coords:[32.4811,72.9069],trainers:[{name:'Balquees Akhter',contact:'3094088238'}]},{name:'KOT MOMIN',district:'Sargodha',coords:[32.1931,73.0239],trainers:[{name:'Attia Jan',contact:'3497695099'}]},{name:'SHAHPUR',district:'Sargodha',coords:[32.2833,72.4167],trainers:[{name:'NASREEN FATIMA',contact:'3415096780'}]},{name:'SILLANWALI',district:'Sargodha',coords:[31.8167,72.55],trainers:[{name:'Samreen Fatima',contact:'3221801325'}]},{name:'CHAKWAL',district:'Chakwal',coords:[32.93,72.8583],trainers:[{name:'SHANZA KOMAL',contact:'3105577958'},{name:'khawar Hussain',contact:'3101890389'}]},{name:'KALLAR KAHAR',district:'Chakwal',coords:[32.7833,72.7],trainers:[{name:'Tamseela Bibi',contact:'3424313755'}]},{name:'CHOA SAIDAN SHAH',district:'Chakwal',coords:[32.7167,72.9833],trainers:[{name:'Anam fatima',contact:'3435302427'},{name:'Sidra Bashir',contact:'3315496740'}]},{name:'TALAGANG',district:'Talagang',coords:[32.9292,72.4181],trainers:[{name:'Tasleem zahra',contact:'3209838566'},{name:'AMARA BATOOL',contact:'3198116221'}]},{name:'LAWA',district:'Talagang',coords:[32.7,72.1],trainers:[{name:'Amna Farooq',contact:'3213159904'},{name:'ANEES FATIMA',contact:'3054542542'}]},{name:'JHELUM',district:'Jhelum',coords:[32.9333,73.7333],trainers:[{name:'Maryam Tariq',contact:'3349513097'},{name:'Iqra farooq',contact:'3195534608'},{name:'SAWERA AFZAL',contact:'3445043732'},{name:'Sabiha Gull',contact:'3278562900'},{name:'Rimsha Kanwal',contact:'3408839190'},{name:'Ayeza Mehboob',contact:'3471245049'}]}]},
+        'IC-06':{hub:'Gujranwala',hubCoords:[32.1617,74.1883],color:'#0891B2',zone:'North',stations:[{name:'GUJRANWALA CITY',district:'Gujranwala',coords:[32.1617,74.1883],trainers:[{name:'Sheeza Umar',contact:'3047490324'},{name:'Maira Abbas',contact:'3123673953'}]},{name:'GUJRANWALA SADDAR',district:'Gujranwala',coords:[32.18,74.2],trainers:[{name:'Saira Fakhar',contact:'3127598468'}]},{name:'KAMOKE',district:'Gujranwala',coords:[31.975,74.2231],trainers:[{name:'Haniya Afzal',contact:'3197316589'},{name:'Ansa Qaisar Mehmood',contact:'3279776626'}]},{name:'NOWSHERA VIRKAN',district:'Gujranwala',coords:[31.9964,73.9556],trainers:[{name:'Sumaira Kanwal',contact:'3429063743'}]},{name:'WAZIRABAD',district:'Wazirabad',coords:[32.4286,74.12],trainers:[{name:'Minahil Asim',contact:'3267529788'},{name:'SABA HANIF',contact:'3144650241'}]},{name:'HAFIZABAD',district:'Hafizabad',coords:[32.0708,73.6875],trainers:[{name:'Hamda Noor',contact:'3269880936'}]},{name:'PINDI BHATTIAN',district:'Hafizabad',coords:[31.8958,73.2708],trainers:[{name:'Iqra Asad',contact:'3088018893'}]},{name:'MANDI BAHAUDDIN',district:'Mandi Bahauddin',coords:[32.5861,73.4917],trainers:[{name:'MUNAWAR SULTANA',contact:'3049478960'}]},{name:'MALAKWAL',district:'Mandi Bahauddin',coords:[32.5539,73.2106],trainers:[{name:'KAYNAT BABAR',contact:'3098206885'}]},{name:'PHALIA',district:'Mandi Bahauddin',coords:[32.4333,73.5833],trainers:[{name:'Aqsa Azam',contact:'3420049475'}]}]},
+        'IC-07':{hub:'Gujrat',hubCoords:[32.5736,74.0789],color:'#DB2777',zone:'North',stations:[{name:'GUJRAT',district:'Gujrat',coords:[32.5736,74.0789],trainers:[{name:'Bushra Ashraf',contact:'3213595265'},{name:'Samia Naz',contact:'3410476053'},{name:'Ambreen raqeeb raqeeb',contact:'3259610199'},{name:'Ume Farwa',contact:'3061475716'}]},{name:'KHARIAN',district:'Gujrat',coords:[32.8108,73.8647],trainers:[{name:'Nadia Parveen',contact:'3187157712'},{name:'Bushra Bibi',contact:'3254431968'},{name:'SANA RAFIQ',contact:'3039872073'},{name:'sabal jawaid',contact:'3225646756'}]},{name:'SIALKOT',district:'Sialkot',coords:[32.4945,74.5229],trainers:[{name:'Izza Aslam',contact:'3056014774'}]},{name:'DASKA',district:'Sialkot',coords:[32.325,74.35],trainers:[{name:'Tatiana Chand',contact:'3420142895'}]},{name:'SAMBRIAL',district:'Sialkot',coords:[32.475,74.35],trainers:[{name:'Nazia Noreen',contact:'3316724493'}]},{name:'PASRUR',district:'Sialkot',coords:[32.2667,74.6667],trainers:[{name:'Fazilat ilyas',contact:'3498994562'}]},{name:'DINA',district:'Jhelum',coords:[33.0283,73.6011],trainers:[{name:'Nimra Bibi',contact:'3015872393'},{name:'Muqadas Nawaz',contact:'3048961797'},{name:'Sadia Bano',contact:'3011661996'},{name:'Misbah Shahzadi',contact:'3090273776'},{name:'Kanwal Saeed',contact:'3105082756'},{name:'SAMAVIA YASIN',contact:'3045874189'},{name:'Sidra Imtiaz',contact:'3045804036'},{name:'SALEHA BIBI',contact:'3035430229'},{name:'Khadija bibi',contact:'3038162108'},{name:'Sheher Bano',contact:'3495404004'},{name:'Fatima Noreen',contact:'3419510211'},{name:'Farzana Kousar',contact:'3150565840'}]},{name:'SOHAWA',district:'Jhelum',coords:[33.1256,73.435],trainers:[{name:'WAKEELA BEGUM',contact:'3364779029'}]},{name:'PIND DADAN KHAN',district:'Jhelum',coords:[32.5856,73.0403],trainers:[{name:'SYEDA RAKSHANDA',contact:'3104806280'}]},{name:'NAROWAL',district:'Narowal',coords:[32.1022,74.8731],trainers:[{name:'Asma Parvaiz',contact:'3042446682'}]},{name:'SHAKARGARH',district:'Narowal',coords:[32.2628,75.1583],trainers:[{name:'Atika Siddique',contact:'3079593684'}]},{name:'ZAFARWAL',district:'Narowal',coords:[32.3403,74.9039],trainers:[{name:'Halima sadia',contact:'3490902524'}]}]},
+        'IC-08':{hub:'Multan',hubCoords:[30.1575,71.5249],color:'#10B981',zone:'South',stations:[{name:'MULTAN CITY',district:'Multan',coords:[30.1984,71.4697],trainers:[{name:'Uzma Saeed',contact:'3006327723'},{name:'arooba NA',contact:'3099836393'},{name:'Afsari Ahmad',contact:'3035123015'},{name:'Hania Batool',contact:'3053800062'},{name:'Misbah Mujahid',contact:'3212672803'},{name:'Rimsha Waris',contact:'3070301632'}]},{name:'MULTAN SADDAR',district:'Multan',coords:[30.1575,71.5249],trainers:[{name:'Memoona Fatima',contact:'3019163030'},{name:'Zeenat Zahid',contact:'3217007217'}]},{name:'SHUJABAD',district:'Multan',coords:[29.8781,71.2941],trainers:[{name:'Nimra Sajjad',contact:'3261637693'},{name:'Sadia Qasim',contact:'3246351539'}]},{name:'JALALPUR PIRWALA',district:'Multan',coords:[29.5052,71.222],trainers:[{name:'Rashida Azam',contact:'3090720368'},{name:'Ajwa Zafar',contact:'3246715436'},{name:'Humaira Aslam',contact:'3276975352'},{name:'Shehla Habib',contact:'3026833952'}]},{name:'KHANEWAL',district:'Khanewal',coords:[30.2864,71.932],trainers:[{name:'Qandeel Fatima',contact:'3033270106'}]},{name:'KABIRWALA',district:'Khanewal',coords:[30.4,71.8667],trainers:[{name:'Samena Bibi',contact:'3276679693'}]},{name:'MIAN CHANNU',district:'Khanewal',coords:[30.45,72.35],trainers:[{name:'Sobia Kanwal',contact:'3075817821'}]},{name:'JAHANIAN',district:'Khanewal',coords:[30.0399,71.818],trainers:[{name:'Ghazala Umbreen',contact:'3004185305'}]},{name:'LODHRAN',district:'Lodhran',coords:[29.5413,71.6335],trainers:[{name:'Areesha Naz',contact:'3237379680'},{name:'Sabina Asif',contact:'3075682613'}]},{name:'DUNYAPUR',district:'Lodhran',coords:[29.8027,71.7434],trainers:[{name:'Samina Bibi',contact:'3067590387'},{name:'Mishal Ismail',contact:'3497305704'}]},{name:'KAROR PACCA',district:'Lodhran',coords:[29.6283,71.899],trainers:[{name:'Mehwish Ramzan',contact:'3038856622'}]},{name:'GULL E LALA',district:'Lodhran',coords:[29.5413,71.6335],trainers:[{name:'Gull E Lala',contact:'3040460308'}]},{name:'VEHARI',district:'Vehari',coords:[30.0411,72.3511],trainers:[{name:'Muqadas Bibi',contact:'3263846041'}]}]},
+        'IC-09':{hub:'Bahawalpur',hubCoords:[29.3544,71.6911],color:'#F59E0B',zone:'South',stations:[{name:'BAHAWALPUR CITY',district:'Bahawalpur',coords:[29.3957,71.6833],trainers:[{name:'Saba Rafique',contact:'3017689608'}]},{name:'BAHAWALPUR SADDAR',district:'Bahawalpur',coords:[29.3544,71.6911],trainers:[{name:'Rukhsana Faqir',contact:'3077706458'}]},{name:'AHMEDPUR',district:'Bahawalpur',coords:[29.1436,71.2619],trainers:[{name:'Uzma Mujahid',contact:'3061578510'}]},{name:'CHISHTIAN',district:'Bahawalpur',coords:[29.7958,72.8528],trainers:[{name:'Shakila Faheem',contact:'3074299516'}]},{name:'HASILPUR',district:'Bahawalpur',coords:[29.6917,72.55],trainers:[{name:'Farzana Atta Muhammad',contact:'3281008897'}]},{name:'KHAIRPUR TAMEWALI',district:'Bahawalpur',coords:[29.5799,72.2327],trainers:[{name:'kalsoom abid',contact:'3062393656'},{name:'Shaista Akhtar',contact:'3052103416'}]},{name:'YAZMAN',district:'Bahawalpur',coords:[29.1231,71.7483],trainers:[{name:'Kashmala Liaqat',contact:'3248103316'},{name:'Naila Jabeen',contact:'3015896319'}]},{name:'BAHAWALNAGAR',district:'Bahawalnagar',coords:[29.9928,73.2536],trainers:[{name:'AMNA LIAQAT',contact:'3186262498'},{name:'Rabia Akhtar',contact:'3035212448'}]},{name:'CHISTIAN',district:'Bahawalnagar',coords:[29.7958,72.8528],trainers:[{name:'Sobia Liaqat',contact:'3097734517'}]},{name:'FORT ABBAS',district:'Bahawalnagar',coords:[29.1936,72.8544],trainers:[{name:'Sidra Jabeen',contact:'3166458279'}]},{name:'MINCHINABAD',district:'Bahawalnagar',coords:[30.1622,73.5653],trainers:[{name:'Humaira Mustafa',contact:'3276045570'}]},{name:'BUREWALA',district:'Vehari',coords:[30.1589,72.6817],trainers:[{name:'Farida Bibi',contact:'3041453796'},{name:'Mafia Niamat',contact:'3070795986'}]},{name:'MAILSI',district:'Vehari',coords:[29.8003,72.1758],trainers:[{name:'Farzana Parveen',contact:'3269542418'},{name:'Maryam Akhtar',contact:'3101624048'}]}]},
+        'IC-10':{hub:'D.G. Khan',hubCoords:[30.0333,70.6333],color:'#14B8A6',zone:'South',stations:[{name:'DERA GHAZI KHAN',district:'Dera Ghazi Khan',coords:[30.0333,70.6333],trainers:[{name:'Shakila Rani',contact:'3194736783'},{name:'Roshna Kanwal',contact:'3301895922'},{name:'Shahla Naz',contact:'3317985151'},{name:'lubna abid',contact:'3157379525'},{name:'Saira latif',contact:'3322718182'}]},{name:'KOT CHHUTTA',district:'Dera Ghazi Khan',coords:[29.8867,70.6506],trainers:[{name:'Ayesha Nazim',contact:'3048586452'},{name:'Riffat Jabeen',contact:'3486190656'},{name:'Shabana Batool',contact:'3184730160'}]},{name:'DE -EXCLUDED AREA',district:'Dera Ghazi Khan',coords:[30.5,70.2],trainers:[{name:'Rabia Bibi',contact:'3216722604'}]},{name:'TAUNSA',district:'Taunsa',coords:[30.705,70.6508],trainers:[{name:'Gul Bibi',contact:'3307181888'},{name:'Mehnaz Anil',contact:'3440705337'},{name:'Shaista Jabeen',contact:'3193189414'}]},{name:'RAJANPUR',district:'Rajanpur',coords:[29.1031,70.3256],trainers:[{name:'Samreen Fayyaz',contact:'3336606969'},{name:'Salma Ashiq',contact:'3126866295'},{name:'Rabia Aziz',contact:'3131605032'},{name:'Rehana Gafar',contact:'3104308912'},{name:'Khalida Ashiq',contact:'3321630467'},{name:'Aqsana Tariq',contact:'3320749632'},{name:'Shazia Batool',contact:'3340784671'},{name:'Riffat Hameed',contact:'3324170464'}]},{name:'DE-ELXCLUDED AREA RAJANPUR',district:'Rajanpur',coords:[29.5,69.9],trainers:[{name:'Faria Hashim',contact:'3262267301'}]},{name:'ROJHAN',district:'Rajanpur',coords:[28.6853,70.2058],trainers:[{name:'Muskan NA',contact:'3004465664'}]},{name:'JAMPUR',district:'Jampur',coords:[29.6419,70.5947],trainers:[{name:'Saadia Bibi',contact:'3366966938'},{name:'Rukhsana Bibi',contact:'3326525993'}]}]},
+        'IC-11':{hub:'Muzaffargarh',hubCoords:[30.0703,71.1933],color:'#D946EF',zone:'South',stations:[{name:'MUZAFFARGARH',district:'Muzaffargarh',coords:[30.0703,71.1933],trainers:[{name:'Muazma Aslam',contact:'3069078472'},{name:'Afeera Aziz',contact:'3156323891'},{name:'Shaheen Bibi',contact:'3194360974'},{name:'Tahira Haq',contact:'3043827892'},{name:'sumaira shaukat',contact:'3116198400'}]},{name:'KHANGARH',district:'Muzaffargarh',coords:[29.9139,71.16],trainers:[{name:'Neha Tariq',contact:'3141763969'},{name:'Shabana Habib',contact:'3208670848'}]},{name:'RANGPUR',district:'Muzaffargarh',coords:[30.45,71.4833],trainers:[{name:'Summia Bibi',contact:'3007360874'}]},{name:'ALIPUR',district:'Muzaffargarh',coords:[29.3808,70.9103],trainers:[{name:'Hafiza Bushra',contact:'3220494558'},{name:'Fouzia Zawar',contact:'3346983601'}]},{name:'JATOI',district:'Muzaffargarh',coords:[29.5067,70.8464],trainers:[{name:'Aleena bibi',contact:'3276314803'},{name:'Ruzeena Javed',contact:'3067878805'},{name:'Maria Rasheed',contact:'3075142477'},{name:'Shahida Niaz',contact:'3036737169'}]},{name:'KOT ADDU',district:'Kot Addu',coords:[30.4725,70.9653],trainers:[{name:'Saira Mustafa',contact:'3070668994'}]},{name:'CHOWK SARWAR',district:'Kot Addu',coords:[30.25,70.9333],trainers:[{name:'Tehmina Abbass',contact:'3080590633'}]},{name:'LAYYAH',district:'Layyah',coords:[30.9567,70.9444],trainers:[{name:'Arsala Yar',contact:'3341729196'},{name:'Tehreem Gul',contact:'3124333208'},{name:'Misbah Faiz',contact:'3061911366'},{name:'MULAZIM GISHKORI',contact:'3006769924'},{name:'Bushra Nazz',contact:'3068037589'}]},{name:'CHOUBARA',district:'Layyah',coords:[30.9075,71.5058],trainers:[{name:'Safia Bibi',contact:'3076763823'},{name:'Shagufta Zubair',contact:'3277806080'}]},{name:'KAROR LAL ESAN',district:'Layyah',coords:[31.2167,70.95],trainers:[{name:'Sumaira Batool',contact:'3077559660'},{name:'Farena Balouch',contact:'3047163332'}]}]},
+        'IC-12':{hub:'Bhakkar',hubCoords:[31.6333,71.0667],color:'#64748B',zone:'South',stations:[{name:'BHAKKAR',district:'Bhakkar',coords:[31.6333,71.0667],trainers:[{name:'Sunaina Shezadi',contact:'3424056185'},{name:'Aneela Basheer',contact:'3405355875'},{name:'Sabika Zahra',contact:'3300627212'}]},{name:'DARYA KHAN',district:'Bhakkar',coords:[31.7844,71.1019],trainers:[{name:'Shazia Yaseen',contact:'3423126910'},{name:'AYESHA ISHAFAQ',contact:'3091770793'}]},{name:'MANKERA',district:'Bhakkar',coords:[31.3981,71.4365],trainers:[{name:'TOOBA IMTIAZ',contact:'3486572678'}]},{name:'KALUR KOT',district:'Bhakkar',coords:[31.9667,71.2833],trainers:[{name:'Iqra Rasheed',contact:'3012384336'}]},{name:'MIANWALI',district:'Mianwali',coords:[32.5833,71.5333],trainers:[{name:'Hamra Bibi',contact:'3487878428'},{name:'Moazma Ayesha',contact:'3058105445'}]},{name:'ISAKHEL',district:'Mianwali',coords:[32.6747,71.2811],trainers:[{name:'NADIA HAMEED',contact:'3475227901'}]},{name:'PIPLAN',district:'Mianwali',coords:[32.3,71.3667],trainers:[{name:'Ana Kanwal',contact:'3434164191'},{name:'Rehana Abbas',contact:'3418590710'}]},{name:'KHUSHAB',district:'Khushab',coords:[32.2961,72.3536],trainers:[{name:'Sobia Quddoos',contact:'3106082128'}]},{name:'NOORPUR THAL',district:'Khushab',coords:[31.8785,71.8986],trainers:[{name:'Nimra Ramzan',contact:'3061113099'}]},{name:'QUAIDABAD',district:'Khushab',coords:[32.3275,72.0353],trainers:[{name:'Adila Parveen',contact:'3260051413'},{name:'Waqas Bin Rauf',contact:'3035208949'}]}]}
+    };
+    
+    const zoneFilter = document.getElementById('zone-filter');
+    const icFilter = document.getElementById('ic-filter');
+    const stationListContainer = document.getElementById('station-list');
+    const subtitle = document.getElementById('sidebar-subtitle');
+    const stationListTitle = document.getElementById('station-list-title');
+
+    const layers = {
+        lines: L.layerGroup().addTo(map),
+        stations: L.layerGroup().addTo(map),
+        hubs: L.layerGroup().addTo(map)
+    };
+
+    function initializeDashboard() {
+        populateZoneFilter();
+        populateIcFilter('all');
+        updateMapDisplay(); 
+        
+        zoneFilter.addEventListener('change', (e) => {
+            populateIcFilter(e.target.value);
+            updateMapDisplay();
+        });
+
+        icFilter.addEventListener('change', (e) => {
+            updateMapDisplay();
+        });
+        
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.body.classList.contains('dark-mode');
+            const icon = document.querySelector('#theme-toggle i');
+            icon.style.transform = `rotate(${isDark ? '0' : '360deg'})`;
+            document.body.classList.toggle('dark-mode');
+            icon.classList.toggle('fa-moon', isDark);
+            icon.classList.toggle('fa-sun', !isDark);
+        });
+    }
+
+    function populateZoneFilter() {
+        const zones = ['all', ...new Set(Object.values(deploymentData).map(d => d.zone))];
+        zoneFilter.innerHTML = zones.map(zone => `<option value="${zone}">${zone.charAt(0).toUpperCase() + zone.slice(1)}</option>`).join('');
+    }
+
+    function populateIcFilter(selectedZone) {
+        icFilter.innerHTML = '<option value="all">All Hubs</option>';
+        for (const [icId, data] of Object.entries(deploymentData)) {
+            if (selectedZone === 'all' || data.zone === selectedZone) {
+                icFilter.innerHTML += `<option value="${icId}">${icId}: ${data.hub}</option>`;
+            }
+        }
+    }
+    
+    function updateMapDisplay() {
+        const selectedIc = icFilter.value;
+        if (selectedIc === 'all') {
+            displayStationsByFilter(zoneFilter.value);
+        } else {
+            displayCluster(selectedIc);
+        }
+    }
+
+    function clearMap() {
+        Object.values(layers).forEach(layer => layer.clearLayers());
+        stationListContainer.innerHTML = '';
+    }
+
+    function createStationMarker(station, clusterData) {
+        const stationLatLng = L.latLng(station.coords);
+        const hubLatLng = L.latLng(clusterData.hubCoords);
+        const distance = (map.distance(hubLatLng, stationLatLng) / 1000).toFixed(0);
+
+        // Draw station marker
+        const stationIcon = L.divIcon({
+            className: 'leaflet-marker-icon',
+            html: `<i class="fa-solid fa-location-dot" style="font-size: 28px; color: ${station.trainers.length > 0 ? clusterData.color : 'var(--danger-color)'}; text-shadow: 0 1px 3px rgba(0,0,0,0.4);"></i>`,
+            iconSize: [28, 28], iconAnchor: [14, 28]
+        });
+        const stationMarker = L.marker(stationLatLng, { icon: stationIcon, stationName: station.name }).addTo(layers.stations);
+        
+        stationMarker.on('click', () => setActiveStation(station.name));
+
+        // Create Tooltip
+        let trainerHtml = station.trainers.map(t => `<div class="trainer-entry">${t.name} &middot; <small>${t.contact}</small></div>`).join('');
+        if (station.trainers.length === 0) trainerHtml = '<div class="no-trainer-msg">No trainers assigned</div>';
+        
+        const tooltipContent = `<div class="tooltip-header"><div class="district">${station.district} (${clusterData.hub})</div><h3 class="name" style="color:${clusterData.color};">${station.name}</h3></div><div class="tooltip-body"><div class="tooltip-stats-grid"><div class="stat"><div class="value">${distance}</div><div class="label"><i class="fa-solid fa-road"></i>KM Away</div></div><div class="stat"><div class="value">${station.trainers.length}</div><div class="label"><i class="fa-solid fa-users"></i>Trainers</div></div></div><div class="tooltip-trainers"><h4>Assigned Personnel</h4>${trainerHtml}</div></div>`;
+        stationMarker.bindTooltip(tooltipContent, { className: 'custom-tooltip', offset: [15, 0], direction: 'right' });
+    }
+
+    function displayStationsByFilter(selectedZone = 'all') {
+        clearMap();
+        subtitle.textContent = `${selectedZone.charAt(0).toUpperCase() + selectedZone.slice(1)} Zone Overview`;
+        stationListTitle.style.display = 'block';
+
+        const allStations = [];
+        const bounds = [];
+        for (const [icId, data] of Object.entries(deploymentData)) {
+            if (selectedZone === 'all' || data.zone === selectedZone) {
+                data.stations.forEach(station => {
+                    bounds.push(station.coords);
+                    createStationMarker(station, data);
+                    allStations.push({ station, clusterData: data });
+                });
+            }
+        }
+        
+        populateStationList(allStations.map(({ station, clusterData }) => ({
+            ...station,
+            hubCoords: clusterData.hubCoords,
+            color: clusterData.color
+        })));
+
+        if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
+        else map.setView([31.5, 73.0], 7);
+    }
+
+    function displayCluster(icId) {
+        clearMap();
+        stationListTitle.style.display = 'block';
+        const clusterData = deploymentData[icId];
+        subtitle.textContent = `${icId} - ${clusterData.hub} Cluster`;
+        
+        const hubIcon = L.divIcon({
+            html: `<div class="pulse-ring" style="--color: ${clusterData.color};"></div>`,
+            className: 'hub-marker', iconSize: [30, 30], iconAnchor: [15, 15]
+        });
+        L.marker(clusterData.hubCoords, { icon: hubIcon, zIndexOffset: 1000 }).addTo(layers.hubs);
+
+        const stationDataForList = clusterData.stations.map(s => ({ ...s, hubCoords: clusterData.hubCoords, color: clusterData.color }));
+        populateStationList(stationDataForList);
+        
+        const bounds = [clusterData.hubCoords];
+        clusterData.stations.forEach((station) => {
+            bounds.push(station.coords);
+            createStationMarker(station, clusterData);
+        });
+
+        if(bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+    }
+
+    function populateStationList(stations) {
+        stationListContainer.innerHTML = '';
+        const sortedStations = [...stations].sort((a, b) => a.name.localeCompare(b.name));
+
+        sortedStations.forEach((station, index) => {
+            const hubLatLng = L.latLng(station.hubCoords);
+            const stationLatLng = L.latLng(station.coords);
+            const distance = (map.distance(hubLatLng, stationLatLng) / 1000).toFixed(0);
+            const trainerCount = station.trainers.length;
+
+            const item = document.createElement('div');
+            item.className = 'station-item';
+            item.dataset.stationName = station.name;
+            item.innerHTML = `<div style="display:flex; align-items:center;"><div class="station-icon"><i class="fa-solid fa-location-dot" style="color: ${trainerCount > 0 ? station.color : 'var(--danger-color)'};"></i></div><div><div class="station-name">${station.name}</div><div class="station-district">${station.district}</div></div></div><div class="station-meta"><div class="station-meta-item"><span class="value">${trainerCount}</span> Trainers</div><div class="station-meta-item"><span class="value">${distance}</span> KM</div></div>`;
+            item.style.animation = `fade-in-up 0.5s ${index * 0.05}s ease-out forwards`;
+
+            item.addEventListener('click', () => {
+                setActiveStation(station.name);
+                map.flyTo(station.coords, 14, { duration: 1 });
+                layers.stations.eachLayer(marker => {
+                    if (marker.options.stationName === station.name) {
+                        setTimeout(() => marker.openTooltip(), 300);
+                    }
+                });
+            });
+            stationListContainer.appendChild(item);
+        });
+    }
+
+    function setActiveStation(stationName) {
+        document.querySelectorAll('.station-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.stationName === stationName);
+            if (item.dataset.stationName === stationName) {
+                item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
+    
+    initializeDashboard();
+});
+</script>
+</body>
+</html>
