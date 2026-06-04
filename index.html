@@ -1,562 +1,1731 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DFLT Phase 2 - Deployment Dashboard</title>
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <title>Budget Brief 2025-26 | Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;900&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --font-family: 'Montserrat', sans-serif;
-            --bg-color: #F3F4F6;
-            --text-color: #1F2937;
-            --text-muted: #6B7280;
-            --accent-color: #4F46E5;
-            --danger-color: #EF4444;
-            --success-color: #22C55E;
-            --success-dark-color: #15803d;
-            --warning-color: #F59E0B;
-            --global-rural-color: #0d9488; /* Teal */
-            --global-urban-color: #7c3aed; /* Purple */
-            --sidebar-bg: rgba(255, 255, 255, 0.55);
-            --tooltip-bg: rgba(255, 255, 255, 0.85);
-            --item-bg: rgba(255, 255, 255, 0.3);
-            --item-hover-bg: rgba(255, 255, 255, 0.7);
-            --border-color: rgba(229, 231, 235, 1);
-            --shadow-color: rgba(0, 0, 0, 0.08);
-            --blur-intensity: 15px;
+            --bg-color: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --primary-glow: #38bdf8;
+            --secondary-glow: #818cf8;
+            --highlight-color-start: #4299e1;
+            /* Blue for FY24-25 */
+            --highlight-color-end: #e53e3e;
+            /* Red for FY25-26 */
         }
 
-        body.dark-mode {
-            --bg-color: #111827;
-            --text-color: #F9FAFB;
-            --text-muted: #9CA3AF;
-            --accent-color: #6366F1;
-            --danger-color: #F87171;
-            --success-color: #4ADE80;
-            --success-dark-color: #22c55e;
-            --warning-color: #FBBF24;
-            --global-rural-color: #2dd4bf; 
-            --global-urban-color: #a78bfa;
-            --sidebar-bg: rgba(29, 41, 59, 0.5);
-            --tooltip-bg: rgba(29, 41, 59, 0.8);
-            --item-bg: rgba(55, 65, 81, 0.4);
-            --item-hover-bg: rgba(55, 65, 81, 0.8);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --shadow-color: rgba(0, 0, 0, 0.25);
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            color: #e2e8f0;
+            overflow-x: hidden;
         }
 
-        html, body {
-            height: 100%; margin: 0; padding: 0;
-            font-family: var(--font-family); color: var(--text-color);
-            overflow: hidden; background-color: var(--bg-color);
-            transition: background-color 0.5s ease;
+        .aurora-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: url('https://media.istockphoto.com/id/2198896678/photo/abstract-visualization-of-financial-graph-with-candle-stick-bars-on-digital-display.jpg?b=1&s=612x612&w=0&k=20&c=0s85XdtkUe_lwMr-pghx_urhWGrKC_6AJNyekqNAnvA=');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.05;
         }
 
-        body::before {
-            content: ''; position: absolute; width: 200%; height: 200%;
-            top: -50%; left: -50%; z-index: -1;
-            background: linear-gradient(45deg, rgba(79, 70, 229, 0.15), rgba(99, 102, 241, 0.1), rgba(239, 68, 68, 0.15), rgba(59, 130, 246, 0.15));
-            animation: gradient-pan 25s ease infinite;
-        }
-        body.dark-mode::before {
-            background: linear-gradient(45deg, rgba(79, 70, 229, 0.2), rgba(99, 102, 241, 0.15), rgba(239, 68, 68, 0.1), rgba(14, 165, 233, 0.15));
-        }
-
-        .dashboard-container { position: relative; height: 100vh; width: 100vw; animation: fade-in 0.8s ease; }
-        #map-container { position: absolute; top: 0; left: 0; height: 100%; width: 100%; }
-        #map { width: 100%; height: 100%; background: transparent; }
-        .leaflet-tile-pane { transition: filter 0.5s ease; }
-        .dark-mode .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
-
-        #sidebar {
-            position: absolute; top: 20px; left: 20px; bottom: 20px; width: 380px; z-index: 1001;
-            background: var(--sidebar-bg); backdrop-filter: blur(var(--blur-intensity));
-            -webkit-backdrop-filter: blur(var(--blur-intensity));
-            border: 1px solid var(--border-color); border-radius: 24px;
-            box-shadow: 0 8px 32px 0 var(--shadow-color);
-            padding: 25px; display: flex; flex-direction: column; transition: all 0.3s ease;
-        }
-        .sidebar-header {
-            display: flex; justify-content: space-between; align-items: flex-start;
-            border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;
-        }
-        .sidebar-header h1 { font-size: 28px; font-weight: 800; margin: 0 0 5px 0; color: var(--accent-color); letter-spacing: -1px; }
-        .sidebar-header .subtitle { font-size: 14px; color: var(--text-muted); margin: 0; }
-        #theme-toggle {
-            background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer;
-            padding: 8px 10px; border-radius: 12px; font-size: 16px; transition: all 0.3s ease;
-            flex-shrink: 0; margin-left: 15px;
-        }
-        #theme-toggle:hover { background: var(--item-hover-bg); color: var(--text-color); transform: scale(1.05) rotate(15deg); }
-        #theme-toggle i { transition: transform 0.4s ease; }
-
-        .sidebar-section-header { font-size: 16px; font-weight: 600; margin: 0 0 15px 0; color: var(--text-color); }
-        .sidebar-section-header i { margin-right: 8px; color: var(--text-muted); }
-        /* This new rule removes the annoying focus outline */
-        .sidebar-section-header:focus, .filter-group select:focus, .district-item:focus {
-            outline: none;
-        }
-
-        #overview-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; padding: 15px; background: var(--item-bg); border-radius: 14px; }
-        .overview-stat { text-align: center; }
-        .overview-stat-value { font-size: 24px; font-weight: 800; color: var(--accent-color); }
-        .overview-stat-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); }
-
-        #global-classification-chart { margin-bottom: 20px; }
-        #global-classification-chart .rural { background-color: var(--global-rural-color); }
-        #global-classification-chart .urban { background-color: var(--global-urban-color); }
-
-        .sidebar-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .filter-group { flex: 1; }
-        .filter-group label { font-weight: 600; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: block; text-transform: uppercase;}
-        .filter-group select {
-            width: 100%; padding: 10px; border-radius: 10px;
+        /* --- Card and Reveal Animations --- */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-color);
-            background: var(--item-bg); color: var(--text-color);
-            font-family: var(--font-family); font-size: 14px;
-            -webkit-appearance: none; appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%239ca3af' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
-            cursor: pointer;
+            border-radius: 1.25rem;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+            padding: 1.5rem 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            opacity: 0;
+            transform: translateY(30px);
+            /* Link multiple animations: fadeIn is the entrance, subtle-pulse is the loop */
+            animation: fadeIn 0.8s forwards ease-out, subtle-pulse 5s infinite ease-in-out;
+            animation-play-state: paused;
+            /* Start the animation paused */
         }
 
-        #district-list-container { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; }
-        #district-list { flex-grow: 1; overflow-y: auto; padding-right: 10px; margin-right: -10px; }
-        #district-list::-webkit-scrollbar { width: 5px; }
-        #district-list::-webkit-scrollbar-track { background: transparent; }
-        #district-list::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 10px; }
-
-        .district-item {
-            padding: 12px 15px; border-radius: 14px; cursor: pointer;
-            margin-bottom: 10px; border: 1px solid transparent; background-color: var(--item-bg);
-            transition: all 0.25s ease; opacity: 0;
-        }
-        .district-item:hover { background-color: var(--item-hover-bg); transform: scale(1.02); border-color: var(--border-color); }
-        .district-item.active { background-color: var(--accent-color); color: white; transform: scale(1.03); box-shadow: 0 4px 15px -2px var(--accent-color); }
-        .district-item.active .district-name, .district-item.active .stat-label, .district-item.active .stat-value, .district-item.active .balance-bar div, .district-item.active .balance-text { color: rgba(255, 255, 255, 0.9); }
-        .district-item.active .balance-bar { background-color: rgba(255,255,255,0.2) !important; }
-
-        .district-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .district-name { font-weight: 700; font-size: 16px; }
-        .district-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .stat-block { text-align: left; }
-        .stat-value { font-weight: 800; font-size: 18px; }
-        .stat-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); }
-        .balance-bar { width: 100%; height: 8px; background: var(--border-color); border-radius: 4px; overflow: hidden; display: flex; }
-        .balance-bar div { transform-origin: left; animation: fill-bar 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-        .balance-bar .rural { background-color: var(--warning-color); }
-        .balance-bar .urban { background-color: var(--accent-color); }
-        .balance-text { font-size: 11px; text-align: center; margin-top: 5px; color: var(--text-muted); }
-
-        .custom-popup .leaflet-popup-content-wrapper {
-            background: var(--tooltip-bg);
-            backdrop-filter: blur(var(--blur-intensity));
-            -webkit-backdrop-filter: blur(var(--blur-intensity));
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 32px 0 var(--shadow-color);
-            border-radius: 16px;
-            padding: 0;
-        }
-        .custom-popup .leaflet-popup-content {
-            font-family: var(--font-family);
-            margin: 0;
-            animation: fade-in-scale 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
-        }
-        .custom-popup .leaflet-popup-tip {
-            background: var(--tooltip-bg);
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 0 20px var(--primary-glow), 0 0 40px var(--secondary-glow);
+            border-color: rgba(56, 189, 248, 0.5);
         }
 
-        .tooltip-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); }
-        .tooltip-header .district { font-size: 13px; color: var(--text-muted); font-weight: 500; }
-        .tooltip-header .name { font-size: 22px; font-weight: 800; margin: 2px 0 0 0; }
-        .tooltip-body { padding: 15px 20px; max-height: 250px; overflow-y: auto; }
-        .tooltip-body h4 { font-size: 13px; margin: 15px 0 10px 0; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
-        .trainer-entry {
-            font-size: 14px; font-weight: 500; margin-bottom: 8px; padding: 10px; border-radius: 8px;
-            background: rgba(0,0,0,0.03);
-            border-left: 4px solid var(--text-muted);
+        /* This rule starts the looping animation ONLY after the card has faded in */
+        .card.visible {
+            animation-play-state: running;
         }
-        .trainer-entry.top-performer { border-left-color: var(--success-color); }
-        .dark-mode .trainer-entry { background: rgba(255,255,255,0.06); }
-        .trainer-name { font-weight: 700; display: block; margin-bottom: 8px; }
-        .trainer-details {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 6px 10px;
+
+        h1,
+        h2,
+        h3 {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #fafafa, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
             align-items: center;
+            text-shadow: 0 0 5px var(--primary-glow);
         }
-        .trainer-details i {
-            color: var(--text-muted);
-            width: 14px;
+
+        h2 svg {
+            margin-right: 0.75rem;
+            color: var(--primary-glow);
+            filter: drop-shadow(0 0 3px var(--primary-glow));
+            transition: transform 0.4s ease;
+            /* Smooth transition for hover effects */
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+            background: linear-gradient(145deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.15));
+            border-color: var(--primary-glow);
+        }
+
+        /* --- NEW: Header Animations --- */
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-zoom-in {
+            animation: zoomIn 0.8s forwards ease-out;
+        }
+
+        .animate-fade-in-down {
+            animation: fadeInDown 0.8s forwards ease-out;
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s forwards ease-out;
+        }
+
+        /* --- NEW: Subtle Pulsing Glow on Cards --- */
+        @keyframes subtle-pulse {
+
+            0%,
+            100% {
+                border-color: var(--border-color);
+                box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+            }
+
+            50% {
+                border-color: rgba(56, 189, 248, 0.4);
+                box-shadow: 0 0 40px rgba(0, 0, 0, 0.2), 0 0 15px rgba(56, 189, 248, 0.3);
+            }
+        }
+
+        /* --- NEW: Staggered List Item Animation --- */
+        .stagger-item {
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+
+        .stagger-item.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* --- NEW: Interactive Icon Animations --- */
+        @keyframes jiggle {
+
+            0%,
+            100% {
+                transform: rotate(0);
+            }
+
+            25% {
+                transform: rotate(-5deg);
+            }
+
+            75% {
+                transform: rotate(5deg);
+            }
+        }
+
+        @keyframes pop-and-spin {
+            0% {
+                transform: scale(1) rotate(0);
+            }
+
+            50% {
+                transform: scale(1.2) rotate(15deg);
+            }
+
+            100% {
+                transform: scale(1) rotate(0);
+            }
+        }
+
+        .card:hover h2 svg.icon-jiggle {
+            animation: jiggle 0.5s;
+        }
+
+        .card:hover h2 svg.icon-spin {
+            transform-origin: center;
+            animation: pop-and-spin 0.6s ease-out;
+        }
+
+        /* --- Sankey Flow Styles --- */
+        .sankey-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 450px;
+            gap: 1rem;
+        }
+
+        .sankey-node {
             text-align: center;
         }
 
-        .leaflet-marker-icon {
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            transition: transform 0.2s ease-in-out;
+        .sankey-node-box {
+            width: 120px;
+            height: 80px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            box-shadow: 0 0 20px, inset 0 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .sankey-paths {
+            flex-grow: 1;
+            height: 450px;
             position: relative;
         }
-        .leaflet-marker-icon:hover { transform: scale(1.2); }
-        .performance-indicator {
+
+        .sankey-path {
             position: absolute;
-            top: -4px;
-            right: -6px;
-            font-size: 14px;
-            -webkit-text-stroke: 1px black;
-            text-shadow: 0 0 3px black;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.4s ease;
+            animation: fade-in-path 1.5s forwards;
+            opacity: 0;
+            stroke-width: var(--stroke-width);
         }
 
-        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes gradient-pan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        @keyframes fade-in-up { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fade-in-scale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        @keyframes fill-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        @keyframes fade-in-path {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .sankey-endpoints {
+            position: relative;
+            height: 450px;
+            width: 150px;
+        }
+
+        .sankey-endpoint {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            text-align: left;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border-left-width: 4px;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+        }
+
+        .sankey-container.is-highlighted .sankey-path-group,
+        .sankey-container.is-highlighted .sankey-endpoint {
+            opacity: 0.2;
+        }
+
+        .sankey-path-group.is-active,
+        .sankey-endpoint.is-active {
+            opacity: 1 !important;
+        }
+
+        .sankey-path-group.is-active .sankey-path {
+            stroke-width: calc(var(--stroke-width) + 6px);
+        }
+
+        .sankey-endpoint.is-active {
+            transform: scale(1.05) translateX(5px);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- Gender Slope Chart Styles --- */
+        .svg-defs {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .chart-layout {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .y-axis-labels,
+        .change-labels {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            gap: 85px;
+            height: 100%;
+        }
+
+        .category-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            white-space: nowrap;
+        }
+
+        .category-icon {
+            width: 24px;
+            height: 24px;
+            fill: #e2e8f0;
+            opacity: 0.8;
+        }
+
+        .plot-area {
+            position: relative;
+        }
+
+        .data-row {
+            position: relative;
+            height: 120px;
+        }
+
+        .slope-line {
+            position: absolute;
+            height: 3px;
+            background: var(--border-color);
+            top: 50%;
+            left: 20%;
+            width: 60%;
+            transform-origin: left center;
+            transition: all 0.4s ease;
+            animation: drawLine 1.5s 0.5s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+        }
+
+        .data-point {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            border: 3px solid #fff;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            transition: transform 0.3s ease;
+            z-index: 2;
+        }
+
+        .point-start {
+            animation-delay: 1.8s;
+            left: 20%;
+        }
+
+        .point-end {
+            animation-delay: 2s;
+            left: 80%;
+        }
+
+        .data-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-size: 1.2rem;
+            font-weight: 700;
+            opacity: 0;
+            animation: fadeIn 0.5s 2.2s ease forwards;
+            top: -38px;
+            transition: transform 0.3s ease;
+        }
+
+        .data-row:hover .data-label {
+            transform: translate(-50%, -5px) scale(1.1);
+        }
+
+        .change-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            opacity: 0;
+            animation: fadeIn 1s 2.5s ease forwards;
+        }
+
+        .decrease-icon {
+            width: 20px;
+            height: 20px;
+            fill: var(--highlight-color-end);
+        }
+
+        .change-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .x-axis {
+            position: relative;
+            height: 20px;
+            margin-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .x-axis-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-size: 1.1rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .chart-layout:hover .slope-line {
+            background: var(--border-color);
+        }
+
+        .data-row:hover .slope-line {
+            background: linear-gradient(to right, var(--highlight-color-start), var(--highlight-color-end));
+            height: 4px;
+        }
+
+        .data-row:hover .data-point {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+
+        @keyframes drawLine {
+            from {
+                transform: scaleX(0);
+            }
+
+            to {
+                transform: scaleX(1);
+            }
+        }
+
+        @keyframes popIn {
+            from {
+                transform: translate(-50%, -50%) scale(0);
+            }
+
+            to {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* --- NEW SANKEY CHART CSS START --- */
+        #budget-flow-sankey h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 5px var(--primary-glow);
+        }
+
+        #budget-flow-sankey h2 svg {
+            margin-right: 0.75rem;
+            color: var(--primary-glow);
+        }
+
+        #budget-flow-sankey #sankey-chart-area {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            position: relative;
+            padding: 20px 0;
+            min-height: 800px;
+        }
+
+        #budget-flow-sankey #sankey-paths-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        #budget-flow-sankey .sankey-path {
+            fill: none;
+            transition: opacity 0.3s ease;
+            stroke-linecap: round;
+        }
+
+        #budget-flow-sankey #sankey-chart-area.is-highlighted .sankey-path {
+            opacity: 0.1;
+        }
+
+        #budget-flow-sankey #sankey-chart-area .sankey-path.is-active {
+            opacity: 1 !important;
+        }
+
+        #budget-flow-sankey .sankey-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            justify-content: center;
+            z-index: 10;
+            /* Nodes appear above paths */
+        }
+
+        #budget-flow-sankey .sankey-node {
+            background-color: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        #budget-flow-sankey #sankey-chart-area.is-highlighted .sankey-node {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+
+        #budget-flow-sankey #sankey-chart-area .sankey-node.is-active {
+            opacity: 1 !important;
+            transform: scale(1.05);
+            border-color: var(--primary-glow) !important;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        #budget-flow-sankey .sankey-node .node-title {
+            font-weight: 600;
+            color: #cbd5e1;
+            font-size: 0.9em;
+        }
+
+        #budget-flow-sankey .sankey-node .node-value {
+            font-weight: 800;
+            font-size: 1.25em;
+            color: #f1f5f9;
+        }
+
+        #budget-flow-sankey .sankey-node .node-value::before {
+            content: 'Rs. ';
+            font-size: 0.7em;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+
+        #budget-flow-sankey .sankey-node .node-value::after {
+            content: ' Bn';
+            font-size: 0.7em;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+
+        /* Specific node placements using grid-column and grid-row */
+        #budget-flow-sankey #node-total-revenue {
+            grid-row: 2 / span 4;
+        }
+
+        #budget-flow-sankey #node-total-borrowing {
+            grid-row: 6 / span 3;
+        }
+
+        #budget-flow-sankey #node-total-spend {
+            grid-row: 1 / span 9;
+        }
+
+        #budget-flow-sankey #node-provinces {
+            grid-row: 1 / span 4;
+        }
+
+        #budget-flow-sankey #node-federal-budget {
+            grid-row: 5 / span 5;
+        }
+
+        #budget-flow-sankey #node-current-spend {
+            grid-row: 3 / span 4;
+        }
+
+        #budget-flow-sankey #node-dev-spend {
+            grid-row: 8 / span 2;
+        }
+
+        /* Specific Node Colors */
+        #budget-flow-sankey #node-tax-revenue,
+        #budget-flow-sankey #node-non-tax-revenue {
+            border-left: 4px solid #4ade80;
+        }
+
+        #budget-flow-sankey #node-privatization {
+            border-left: 4px solid #facc15;
+        }
+
+        #budget-flow-sankey #node-domestic-borrow,
+        #budget-flow-sankey #node-foreign-borrow {
+            border-left: 4px solid #f87171;
+        }
+
+        #budget-flow-sankey #node-interest,
+        #budget-flow-sankey #node-pension,
+        #budget-flow-sankey #node-subsidies {
+            border-right: 4px solid #ef4444;
+        }
+
+        #budget-flow-sankey #node-defense {
+            border-right: 4px solid #60a5fa;
+        }
+
+        #budget-flow-sankey #node-psdp,
+        #budget-flow-sankey #node-lending {
+            border-right: 4px solid #22c55e;
+        }
+
+        /* --- NEW SANKEY CHART CSS END --- */
     </style>
 </head>
-<body>
-    <div class="dashboard-container">
-        <div id="map-container">
-            <div id="map"></div>
+
+<body class="p-4 sm:p-6 md:p-8">
+    <svg class="svg-defs">
+        <defs>
+            <symbol id="icon-building" viewBox="0 0 24 24">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z" />
+            </symbol>
+            <symbol id="icon-gears" viewBox="0 0 24 24">
+                <path
+                    d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69-.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19-.15-.24-.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69-.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+            </symbol>
+            <symbol id="icon-arrow-down" viewBox="0 0 24 24">
+                <path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z" />
+            </symbol>
+            <symbol id="icon-social-care" viewBox="0 0 24 24">
+                <path
+                    d="M16 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9.39 2.56C4.62 15.65 4 17.25 4 19v1h16v-1c0-1.75-.62-3.35-2.61-4.44C15.86 13.96 14.13 13 12 13s-3.86.96-5.39 1.56z" />
+            </symbol>
+            <symbol id="icon-leaf" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48-1.17 1.99-1.54 3.08-1.2l1.26.42c.97.32 2.04-.18 2.36-1.15l.33-.97c.32-.98.03-2.13-.82-2.73L12 14c-1.46-1.04-1.28-3.15.42-3.91L17 8z" />
+            </symbol>
+        </defs>
+    </svg>
+    <div class="aurora-bg"></div>
+    <div class="max-w-7xl mx-auto">
+
+        <header class="text-center my-16 flex items-center justify-center space-x-8">
+            <img src="https://sdpi.org/assets/images/sdpi-logo-2020.webp" alt="SDPI Logo"
+                class="h-35 w-35 animate-zoom-in" style="animation-delay: 0.1s;"
+                onerror="this.onerror=null;this.src='https://placehold.co/112x112/0f172a/e2e8f0?text=Logo';">
+            <div class="text-left">
+                <h1 class="font-black text-5xl animate-fade-in-down" style="animation-delay: 0.3s;">Budget at a Glance
+                </h1>
+                <p class="text-3xl font-bold text-slate-300 mt-1 animate-fade-in-up" style="animation-delay: 0.5s;">FY
+                    2025-26 ANALYSIS</p>
+                <p class="text-lg text-slate-400 mt-2 animate-fade-in-up" style="animation-delay: 0.7s;">Developed by
+                    Kamran Khan</p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div class="card reveal">
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 icon-jiggle" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Key Directives & Fiscal Summary
+                    </h2>
+                    <ul class="space-y-4 text-slate-300 text-base">
+                        <li class="flex items-start"><span class="mr-4 text-sky-400 mt-1">➔</span><span><strong
+                                    class="text-white">Total Outlay:</strong> Set at <strong class="text-sky-300">Rs
+                                    17.57 Tr</strong>, a 6.9% decrease from the previous fiscal year.</span></li>
+                        <li class="flex items-start"><span class="mr-4 text-sky-400 mt-1">➔</span><span><strong
+                                    class="text-white">Digital Overhaul:</strong> Simplified digital tax filing with
+                                <strong class="text-sky-300">AI-driven systems</strong> for evasion monitoring.</span>
+                        </li>
+                        <li class="flex items-start"><span class="mr-4 text-sky-400 mt-1">➔</span><span><strong
+                                    class="text-white">New Levies:</strong> Introduction of <strong
+                                    class="text-sky-300">18% GST</strong> on solar panels & e-commerce, plus a carbon
+                                levy.</span></li>
+                        <li class="flex items-start"><span class="mr-4 text-sky-400 mt-1">➔</span><span><strong
+                                    class="text-white">Employee Relief:</strong> Salaries increased by <strong
+                                    class="text-green-400">10%</strong> and pensions by <strong
+                                    class="text-green-400">7%</strong>, with tax slab adjustments providing further
+                                relief.</span></li>
+                    </ul>
+                </div>
+                <div class="card reveal">
+                    <h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 icon-spin" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5" />
+                        </svg>
+                        Core Expenditure Quadrants (The 4Ds)
+                    </h2>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="stat-card">
+                            <p class="text-slate-400 text-sm">Debt Interest</p>
+                            <p class="text-4xl font-bold text-red-400" data-count="8207">0 <span
+                                    class="text-2xl font-semibold">Bn</span></p>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-slate-400 text-sm">Defence</p>
+                            <p class="text-4xl font-bold text-sky-400" data-count="2550">0 <span
+                                    class="text-2xl font-semibold">Bn</span></p>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-slate-400 text-sm">Day-to-Day Gov</p>
+                            <p class="text-4xl font-bold text-indigo-400" data-count="2026">0 <span
+                                    class="text-2xl font-semibold">Bn</span></p>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-slate-400 text-sm">Development</p>
+                            <p class="text-4xl font-bold text-green-400" data-count="3114">0 <span
+                                    class="text-2xl font-semibold">Bn</span></p>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-center border-t border-slate-700 pt-4">
+                        <p class="text-slate-400">Total Current Expenditures</p>
+                        <p class="text-5xl font-extrabold text-white" data-count="15897">0</p>
+                        <p class="text-lg font-medium text-slate-500">Billion PKR</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card reveal">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Primary Challenges
+                </h2>
+                <ul class="space-y-4 text-slate-300">
+                    <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong
+                                class="text-white">Economic Pressure:</strong> Risk of rising poverty and
+                            unemployment.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong
+                                class="text-white">Enforcement Gap:</strong> Policy implementation remains a critical
+                            hurdle.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong
+                                class="text-white">Tax Base:</strong> Ambiguity in expanding the tax net to sectors like
+                            real estate.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong
+                                class="text-white">Reform Depth:</strong> Budget lacks deep, structural, and bold
+                            reforms.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong
+                                class="text-white">Wage Stagnation:</strong> Minimum wage remains unchanged from the
+                            previous budget.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong
+                                class="text-white">Relief Imbalance:</strong> Less relief for the salaried class
+                            compared to the real estate sector.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong
+                                class="text-white">Pension Burden:</strong> Pensions continue to exceed salaries,
+                            indicating a need for deeper reforms.</span></li>
+                    <li class="flex items-start"><span class="mr-3 text-red-400 mt-1">⚠</span><span><strong
+                                class="text-white">Inflationary Pressure:</strong> The increase in the petroleum levy
+                            could impact inflation.</span></li>
+                </ul>
+            </div>
         </div>
-        <div id="sidebar">
-            <div class="sidebar-header">
-                <div>
-                    <h1>DFLT Phase 2</h1>
-                    <p class="subtitle" id="sidebar-subtitle">Deployment Dashboard</p>
-                </div>
-                <button id="theme-toggle" title="Toggle Dark Mode"><i class="fa-solid fa-moon"></i></button>
-            </div>
-            
-            <div class="sidebar-section-header"><i class="fa-solid fa-chart-pie"></i>Overview</div>
-            <div id="overview-stats"></div>
 
-            <div id="global-classification-chart"></div>
-
-            <div class="sidebar-filters">
-                <div class="filter-group">
-                    <label for="district-filter">District</label>
-                    <select id="district-filter"></select>
+        <div class="card mt-8 reveal" id="budget-flow-sankey">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M2 12h3m3 0h3m3 0h3m3 0h3M5 12V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-5Z" />
+                </svg>
+                Pakistan Budget 2025-26: The Flow of Funds (Figures in Rs. Billion)
+            </h2>
+            <div id="sankey-chart-area">
+                <svg id="sankey-paths-svg"></svg>
+                <div class="sankey-column" style="grid-column: 1;">
+                    <div class="sankey-node" id="node-tax-revenue" data-value="14131" data-stream="revenue">
+                        <span class="node-title">Tax Revenue</span><span class="node-value">14,131</span>
+                    </div>
+                    <div class="sankey-node" id="node-non-tax-revenue" data-value="5147" data-stream="revenue">
+                        <span class="node-title">Non-Tax Revenue</span><span class="node-value">5,147</span>
+                    </div>
+                    <div class="sankey-node" id="node-privatization" data-value="86" data-stream="revenue">
+                        <span class="node-title">Privatization</span><span class="node-value">86</span>
+                    </div>
+                    <div class="sankey-node" id="node-domestic-borrow" data-value="6505" data-stream="borrowing">
+                        <span class="node-title">Domestic Borrowing</span><span class="node-value">6,505</span>
+                    </div>
+                    <div class="sankey-node" id="node-foreign-borrow" data-value="106" data-stream="borrowing">
+                        <span class="node-title">Foreign Borrowing</span><span class="node-value">106</span>
+                    </div>
                 </div>
-                <div class="filter-group">
-                    <label for="rural-urban-filter">Classification</label>
-                    <select id="rural-urban-filter">
-                        <option value="All">All</option>
-                        <option value="Rural">Rural</option>
-                        <option value="Urban">Urban</option>
-                    </select>
+                <div class="sankey-column" style="grid-column: 2;">
+                    <div class="sankey-node" id="node-total-revenue" data-value="19278" data-stream="revenue">
+                        <span class="node-title">Total Revenue</span><span class="node-value">19,278</span>
+                    </div>
+                    <div class="sankey-node" id="node-total-borrowing" data-value="6611" data-stream="borrowing">
+                        <span class="node-title">Total Borrowing</span><span class="node-value">6,611</span>
+                    </div>
                 </div>
-            </div>
-
-            <div id="district-list-container">
-                <div class="sidebar-section-header"><i class="fa-solid fa-map-location-dot"></i>Districts</div>
-                <div id="district-list"></div>
+                <div class="sankey-column" style="grid-column: 3;">
+                    <div class="sankey-node" id="node-total-spend" data-value="25865" data-stream="spend">
+                        <span class="node-title">Total Spend</span><span class="node-value">25,865</span>
+                    </div>
+                </div>
+                <div class="sankey-column" style="grid-column: 4;">
+                    <div class="sankey-node" id="node-provinces" data-value="8206" data-stream="provinces">
+                        <span class="node-title">To Provinces</span><span class="node-value">8,206</span>
+                    </div>
+                    <div class="sankey-node" id="node-federal-budget" data-value="17573" data-stream="federal">
+                        <span class="node-title">Federal Budget</span><span class="node-value">17,573</span>
+                    </div>
+                </div>
+                <div class="sankey-column" style="grid-column: 5;">
+                    <div class="sankey-node" id="node-punjab" data-value="4076" data-stream="provinces"><span
+                            class="node-title">Punjab</span><span class="node-value">4,076</span></div>
+                    <div class="sankey-node" id="node-sindh" data-value="2044" data-stream="provinces"><span
+                            class="node-title">Sindh</span><span class="node-value">2,044</span></div>
+                    <div class="sankey-node" id="node-kpk" data-value="1343" data-stream="provinces"><span
+                            class="node-title">Khyber Pakhtunkhwa</span><span class="node-value">1,343</span></div>
+                    <div class="sankey-node" id="node-baluchistan" data-value="743" data-stream="provinces"><span
+                            class="node-title">Baluchistan</span><span class="node-value">743</span></div>
+                    <div class="sankey-node" id="node-current-spend" data-value="16286" data-stream="federal-current">
+                        <span class="node-title">Current</span><span class="node-value">16,286</span>
+                    </div>
+                    <div class="sankey-node" id="node-dev-spend" data-value="1287" data-stream="federal-dev">
+                        <span class="node-title">Development</span><span class="node-value">1,287</span>
+                    </div>
+                </div>
+                <div class="sankey-column" style="grid-column: 6;">
+                    <div class="sankey-node" id="node-interest" data-value="8207" data-stream="federal-current"><span
+                            class="node-title">Interest Payments</span><span class="node-value">8,207</span></div>
+                    <div class="sankey-node" id="node-defense" data-value="2550" data-stream="federal-current"><span
+                            class="node-title">Defense</span><span class="node-value">2,550</span></div>
+                    <div class="sankey-node" id="node-pension" data-value="1055" data-stream="federal-current"><span
+                            class="node-title">Pension</span><span class="node-value">1,055</span></div>
+                    <div class="sankey-node" id="node-grants" data-value="1928" data-stream="federal-current"><span
+                            class="node-title">Grants & Transfers</span><span class="node-value">1,928</span></div>
+                    <div class="sankey-node" id="node-subsidies" data-value="1186" data-stream="federal-current"><span
+                            class="node-title">Subsidie</span><span class="node-value">1,186</span></div>
+                    <div class="sankey-node" id="node-running-gov" data-value="971" data-stream="federal-current"><span
+                            class="node-title">Running of Govt</span><span class="node-value">971</span></div>
+                    <div class="sankey-node" id="node-emergencies" data-value="389" data-stream="federal-current"><span
+                            class="node-title">Emergencies</span><span class="node-value">389</span></div>
+                    <div class="sankey-node" id="node-psdp" data-value="1000" data-stream="federal-dev"><span
+                            class="node-title">Federal PSDP</span><span class="node-value">1,000</span></div>
+                    <div class="sankey-node" id="node-lending" data-value="287" data-stream="federal-dev"><span
+                            class="node-title">Net Lending</span><span class="node-value">287</span></div>
+                </div>
             </div>
         </div>
+
+        <div class="card mt-8 reveal">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Major Sectoral Allocations & YoY Change
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-4">
+                    <div id="sector-details-container">
+                    </div>
+                </div>
+                <div class="h-96">
+                    <canvas id="sectoralAllocationsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <div class="card reveal">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    Sectoral Growth Trajectory (%)
+                </h2>
+                <div class="h-96"><canvas id="sectoralTargetsChart"></canvas></div>
+            </div>
+            <div class="card reveal">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Other Allocations: Fiscal Year Comparison (PKR)
+                </h2>
+                <div class="h-96"><canvas id="otherAllocationsChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card mt-8 reveal">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h1a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.7 9.928l.346.346A2 2 0 018.146 11H12m-4.293 2.072l.346.346A2 2 0 008.146 13H12m0-4v4m0 0H8.146m3.854 0H12m0 0l.346.346A2 2 0 0113.854 13H16m-4.293-2.072l.346.346A2 2 0 0013.854 11H16" />
+                </svg>
+                Budget Composition Flow (2025-26)
+            </h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-4">
+                <div id="expenditureSankey"></div>
+                <div id="revenueSankey"></div>
+            </div>
+        </div>
+
+        <div class="card mt-8 reveal">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M12 12a4 4 0 100-8 4 4 0 000 8z" />
+                </svg>
+                Gender-Sensitive Allocation Shift
+            </h2>
+            <p class="text-slate-400 -mt-4 mb-6">A comparative view of gender-sensitive budget allocations, highlighting
+                a decreased focus.</p>
+            <div class="chart-layout">
+                <div class="y-axis-labels">
+                    <div class="category-label">
+                        <svg class="category-icon">
+                            <use xlink:href="#icon-building"></use>
+                        </svg>
+                        <span>Running of Civil Government</span>
+                    </div>
+                    <div class="category-label">
+                        <svg class="category-icon">
+                            <use xlink:href="#icon-gears"></use>
+                        </svg>
+                        <span>Public Sector Development</span>
+                    </div>
+                </div>
+                <div class="plot-area">
+                    <div class="data-row">
+                        <div class="slope-line"></div>
+                        <div class="point-start data-point" style="background-color: var(--highlight-color-start);">
+                            <div class="data-label">9.8%</div>
+                        </div>
+                        <div class="point-end data-point" style="background-color: var(--highlight-color-end);">
+                            <div class="data-label">9.2%</div>
+                        </div>
+                    </div>
+                    <div class="data-row">
+                        <div class="slope-line"></div>
+                        <div class="point-start data-point" style="background-color: var(--highlight-color-start);">
+                            <div class="data-label">7.4%</div>
+                        </div>
+                        <div class="point-end data-point" style="background-color: var(--highlight-color-end);">
+                            <div class="data-label">6.9%</div>
+                        </div>
+                    </div>
+                    <div class="x-axis">
+                        <div class="x-axis-label" style="left: 20%;">FY2024-25</div>
+                        <div class="x-axis-label" style="left: 80%;">FY2025-26</div>
+                    </div>
+                </div>
+                <div class="change-labels">
+                    <div class="change-box">
+                        <svg class="decrease-icon">
+                            <use xlink:href="#icon-arrow-down"></use>
+                        </svg>
+                        <span class="change-text">-0.6 pts</span>
+                    </div>
+                    <div class="change-box">
+                        <svg class="decrease-icon">
+                            <use xlink:href="#icon-arrow-down"></use>
+                        </svg>
+                        <span class="change-text">-0.5 pts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-8 reveal">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24">
+                    <use xlink:href="#icon-leaf"></use>
+                </svg>
+                Climate Finance Allocation Shift
+            </h2>
+            <p class="text-slate-400 -mt-4 mb-6">
+                A comparative view of budget portions earmarked for climate change adaptation and mitigation.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12 items-center">
+                <div class="text-center">
+                    <div id="climateChartROCGContainer" class="h-64 w-64 mx-auto relative">
+                        <canvas id="climateChartROCG"></canvas>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mt-4">Running of Civil Govt.</h3>
+                    <p class="text-2xl font-bold text-red-400">-0.8 pts</p>
+                    <p class="text-slate-400">Shift from 7.7% to 6.9%</p>
+                </div>
+                <div class="text-center">
+                    <div id="climateChartPSDPContainer" class="h-64 w-64 mx-auto relative">
+                        <canvas id="climateChartPSDP"></canvas>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mt-4">Public Sector Dev. Prog.</h3>
+                    <p class="text-2xl font-bold text-red-400">-7.1 pts</p>
+                    <p class="text-slate-400">Shift from 15.3% to 8.2%</p>
+                </div>
+            </div>
+            <div class="mt-12 pt-6 border-t border-slate-700/50 space-y-4 text-slate-300 text-base leading-relaxed">
+                <p><strong class="text-white">➔ FY 2025-26 Allocations:</strong> For the fiscal year 2025-26, the
+                    government has earmarked <strong class="text-amber-400">6.9%</strong> of the total current budget
+                    and <strong class="text-green-400">8.2%</strong> of the development budget to address climate
+                    change.</p>
+                <p><strong class="text-white">➔ Revenue Identification:</strong> A new methodology has been introduced
+                    to identify "green components" in revenue, targeting <strong class="text-sky-400">35%</strong> of
+                    Non-Tax Revenue (NTR) and <strong class="text-sky-400">9.4%</strong> of gross revenues for
+                    FY2025-26.</p>
+            </div>
+        </div>
+
+        <div class="card mt-8 reveal">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <use xlink:href="#icon-social-care"></use>
+                </svg>
+                Social Spending Breakdown
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div id="socialSpendingChartContainer" class="min-h-[450px] relative">
+                    <canvas id="socialSpendingChart"></canvas>
+                    <div id="socialSpendingCenterText"
+                        class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                    </div>
+                </div>
+                <div class="text-slate-300 space-y-4">
+                    <p>
+                        The budget for the <strong class="text-green-400">Benazir Income Support Programme
+                            (BISP)</strong> has seen a nominal <strong>20% increase</strong> to Rs 722.5 billion.
+                    </p>
+                    <p>
+                        This enhancement aims to adjust for inflation by increasing quarterly benefits from Rs 13,500 to
+                        Rs 14,500 and sustain the enrollment of 10 million households, forming the cornerstone of the
+                        nation's social safety net.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card overflow-x-auto mt-8 reveal">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Income Tax Slab Adjustments (Salaried)
+            </h2>
+            <div id="tax-slab-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+            </div>
+        </div>
+
+        <footer class="text-center p-8 text-slate-500 font-semibold reveal">
+            Developed by Dr. Fareeha Armughan & Her Team
+        </footer>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-        // --- MAP INITIALIZATION ---
-        const map = L.map('map', { center: [30.3753, 69.3451], zoom: 6, zoomControl: false });
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>'
-        }).addTo(map);
+        document.addEventListener('DOMContentLoaded', function () {
+            // Observer for animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
 
-        // --- DOM ELEMENT REFERENCES ---
-        const districtFilter = document.getElementById('district-filter');
-        const ruralUrbanFilter = document.getElementById('rural-urban-filter');
-        const districtListContainer = document.getElementById('district-list');
-        const overviewStatsContainer = document.getElementById('overview-stats');
-        const layers = { tehsils: L.layerGroup().addTo(map) };
-        
-        let allProcessedData = {};
-        let grandTotals = {};
-
-        // --- DATA LOADING & PRE-PROCESSING ---
-        async function loadData() {
-            try {
-                const response = await fetch(`data.json?v=${new Date().getTime()}`);
-                if (!response.ok) {
-                    throw new Error(`Could not load data.json. Make sure the file exists in the same folder.`);
-                }
-                allProcessedData = await response.json();
-                calculateGrandTotals();
-                console.log("✅ Data successfully loaded from data.json");
-                return true;
-            } catch (error) {
-                console.error("Data Loading Error:", error);
-                document.getElementById('sidebar').innerHTML = `<div style="text-align: center; padding-top: 50px; color: var(--danger-color);"><h3><i class="fa-solid fa-triangle-exclamation"></i> Data Error</h3><p>${error.message}</p><p style="font-size:12px; color:var(--text-muted)">Please run the Python script first to generate the data.json file.</p></div>`;
-                return false;
-            }
-        }
-
-        function calculateGrandTotals() {
-            const allDistricts = Object.values(allProcessedData);
-            grandTotals = {
-                districts: allDistricts.length,
-                tehsils: allDistricts.reduce((sum, d) => sum + Object.keys(d.tehsils).length, 0),
-                trainers: allDistricts.reduce((sum, d) => sum + d.totalTrainers, 0),
-                headcount: allDistricts.reduce((sum, d) => sum + d.totalHeadCount, 0),
-                totalRural: allDistricts.reduce((sum, d) => sum + d.ruralCount, 0),
-                totalUrban: allDistricts.reduce((sum, d) => sum + d.urbanCount, 0),
-            };
-        }
-
-        // --- UI & MAP RENDERING ---
-        function initializeDashboard() {
-            populateFilters();
-            addEventListeners();
-            updateDisplay();
-            updateGlobalClassificationChart();
-        }
-
-        function populateFilters() {
-            const districtNames = ['All', ...Object.keys(allProcessedData).sort()];
-            districtFilter.innerHTML = districtNames.map(d => `<option value="${d}">${d}</option>`).join('');
-        }
-
-        function addEventListeners() {
-            districtFilter.addEventListener('change', updateDisplay);
-            ruralUrbanFilter.addEventListener('change', updateDisplay);
-            document.getElementById('theme-toggle').addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                const icon = document.querySelector('#theme-toggle i');
-                icon.classList.toggle('fa-moon', !document.body.classList.contains('dark-mode'));
-                icon.classList.toggle('fa-sun', document.body.classList.contains('dark-mode'));
-            });
-        }
-
-        function updateOverviewPanel(stats) {
-            overviewStatsContainer.innerHTML = `
-                <div class="overview-stat">
-                    <div class="overview-stat-value">${stats.districts.toLocaleString()}</div>
-                    <div class="overview-stat-label">Districts</div>
-                </div>
-                <div class="overview-stat">
-                    <div class="overview-stat-value">${stats.tehsils.toLocaleString()}</div>
-                    <div class="overview-stat-label">Duty Stations</div>
-                </div>
-                <div class="overview-stat">
-                    <div class="overview-stat-value">${stats.trainers.toLocaleString()}</div>
-                    <div class="overview-stat-label">Trainers</div>
-                </div>
-                <div class="overview-stat">
-                    <div class="overview-stat-value">${stats.headcount.toLocaleString()}</div>
-                    <div class="overview-stat-label">Headcount</div>
-                </div>
-            `;
-        }
-        
-        function updateGlobalClassificationChart() {
-            const container = document.getElementById('global-classification-chart');
-            const total = grandTotals.totalRural + grandTotals.totalUrban;
-            if (total === 0) {
-                container.innerHTML = '';
-                return;
-            }
-            const ruralPercent = (grandTotals.totalRural / total) * 100;
-            const urbanPercent = (grandTotals.totalUrban / total) * 100;
-
-            container.innerHTML = `
-                <div class="sidebar-section-header" style="margin-top: 20px;"><i class="fa-solid fa-globe"></i>Global Classification</div>
-                <div class="balance-bar">
-                    <div class="rural" style="width: ${ruralPercent}%;" title="${ruralPercent.toFixed(1)}% Rural"></div>
-                    <div class="urban" style="width: ${urbanPercent}%;" title="${urbanPercent.toFixed(1)}% Urban"></div>
-                </div>
-                <div class="balance-text">${ruralPercent.toFixed(0)}% Rural / ${urbanPercent.toFixed(0)}% Urban</div>
-            `;
-        }
-
-        function updateDisplay() {
-            layers.tehsils.clearLayers();
-            districtListContainer.innerHTML = '';
-
-            const selectedDistrict = districtFilter.value;
-            const selectedClassification = ruralUrbanFilter.value;
-
-            const filteredDistricts = Object.values(allProcessedData).filter(d => 
-                selectedDistrict === 'All' || d.name === selectedDistrict
-            );
-            
-            const bounds = [];
-            let currentStats = { districts: 0, tehsils: 0, trainers: 0, headcount: 0 };
-
-            if (selectedDistrict !== 'All' && allProcessedData[selectedDistrict]) {
-                const districtData = allProcessedData[selectedDistrict];
-                currentStats.districts = 1;
-                const tehsilsInView = Object.values(districtData.tehsils).filter(tehsil => 
-                    selectedClassification === 'All' || tehsil.trainers.some(t => t.ruralUrban === selectedClassification)
-                );
-                currentStats.tehsils = tehsilsInView.length;
-                currentStats.trainers = tehsilsInView.reduce((sum, t) => sum + t.trainers.length, 0);
-                currentStats.headcount = tehsilsInView.reduce((sum, t) => sum + (t.trainers[0]?.headCount || 0), 0);
-
-            } else {
-                currentStats = grandTotals;
-            }
-            updateOverviewPanel(currentStats);
-
-            filteredDistricts.forEach((district, index) => {
-                let tehsilsToDisplay = Object.values(district.tehsils);
-
-                if (selectedClassification !== 'All') {
-                    tehsilsToDisplay = tehsilsToDisplay.filter(tehsil => 
-                        tehsil.trainers.some(t => t.ruralUrban === selectedClassification)
-                    );
-                }
-
-                if (tehsilsToDisplay.length > 0) {
-                    populateDistrictList(district, index);
-                    tehsilsToDisplay.forEach(tehsil => {
-                        if (tehsil.coords && !isNaN(tehsil.coords[0]) && !isNaN(tehsil.coords[1])) {
-                           createTehsilMarker(tehsil);
-                           bounds.push(tehsil.coords);
+                        // NEW: Stagger list item animations
+                        const listItems = entry.target.querySelectorAll('ul > li');
+                        if (listItems.length > 0) {
+                            listItems.forEach((item, index) => {
+                                item.classList.add('stagger-item'); // Add base class
+                                setTimeout(() => {
+                                    item.classList.add('visible');
+                                }, 150 * (index + 1)); // Stagger delay
+                            });
                         }
-                    });
-                }
-            });
-            
-            if (bounds.length > 1) {
-                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-            } else if (bounds.length === 1) {
-                map.flyTo(bounds[0], 11);
-            }
-        }
 
-        function createTehsilMarker(tehsil) {
-            let color = 'var(--accent-color)';
-            let icon = 'fa-location-dot';
-            let size = '28px';
-            let indicatorIcon = '';
+                        const countUpElements = entry.target.querySelectorAll('[data-count]');
+                        countUpElements.forEach(el => {
+                            const target = +el.getAttribute('data-count');
+                            // Clear previous content to handle re-triggering, keep suffixes
+                            const suffix = el.querySelector('span') ? el.querySelector('span').outerHTML : '';
+                            el.innerHTML = '0' + suffix;
 
-            // Check for single trainers to add a performance indicator
-            if (!tehsil.isPair && tehsil.trainers.length > 0) {
-                if (tehsil.trainers[0].isTopPerformer) {
-                    indicatorIcon = '<i class="fa-solid fa-star performance-indicator" style="color: #FFD700;"></i>';
-                    color = 'var(--success-dark-color)';
-                } else {
-                    indicatorIcon = '<i class="fa-solid fa-thumbs-down performance-indicator" style="color: var(--danger-color);"></i>';
-                    color = 'var(--danger-color)';
-                }
-            }
-            
-            // Override for paired trainers
-            if (tehsil.isPair) {
-                icon = 'fa-users';
-                size = '32px';
-                if (tehsil.pairStatus === 'GREEN') color = 'var(--success-color)';
-                else if (tehsil.pairStatus === 'YELLOW') color = 'var(--warning-color)';
-                else if (tehsil.pairStatus === 'RED') color = 'var(--danger-color)';
-            }
+                            let start = 0;
+                            const duration = 1500;
+                            const timer = setInterval(() => {
+                                const step = Math.ceil((target - start) / (duration / 16));
+                                start += step;
+                                if (start >= target) {
+                                    start = target;
+                                    clearInterval(timer);
+                                }
+                                el.innerHTML = start.toLocaleString() + suffix;
+                            }, 16);
+                        });
 
-            const tehsilIcon = L.divIcon({
-                className: 'leaflet-marker-icon',
-                html: `<i class="fa-solid ${icon}" style="font-size: ${size}; color: ${color};"></i>${indicatorIcon}`,
-                iconSize: [32, 32], iconAnchor: [16, 32]
-            });
-            const marker = L.marker(tehsil.coords, { icon: tehsilIcon, tehsilName: tehsil.name }).addTo(layers.tehsils);
-
-            const trainerHtml = tehsil.trainers.map(t => `
-                <div class="trainer-entry ${t.isTopPerformer ? 'top-performer' : ''}">
-                    <span class="trainer-name">${t.name}</span>
-                    <div class="trainer-details">
-                        <i class="fa-solid fa-id-card"></i><span>${t.cnic || 'N/A'}</span>
-                        <i class="fa-solid fa-phone"></i><span>${t.contact || 'N/A'}</span>
-                        <i class="fa-solid fa-users-line"></i><span>${t.headCount.toLocaleString()}</span>
-                    </div>
-                </div>`
-            ).join('');
-
-            const popupContent = `
-                <div class="tooltip-header">
-                    <div class="district">${tehsil.district}</div>
-                    <h3 class="name" style="color:${color};">${tehsil.name}</h3>
-                </div>
-                <div class="tooltip-body">
-                    <h4>Assigned Personnel (${tehsil.trainers.length})</h4>
-                    ${trainerHtml}
-                </div>`;
-            
-            marker.bindPopup(popupContent, { className: 'custom-popup', offset: [15, -20] });
-
-            marker.on('click', function (e) {
-                this.openPopup();
-                document.querySelectorAll('.district-item').forEach(item => {
-                    if (item.dataset.districtName === tehsil.district) {
-                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        item.classList.add('active');
-                    } else {
-                        item.classList.remove('active');
+                        if (entry.target.querySelector('#expenditureSankey')) {
+                            setTimeout(() => {
+                                const expenditureData = [
+                                    { label: 'Interest', value: 44.43, color: '#ef4444' }, { label: 'Defence', value: 13.80, color: '#3b82f6' },
+                                    { label: 'Grants', value: 10.44, color: '#10b981' }, { label: 'Pension', value: 10.58, color: '#f97316' },
+                                    { label: 'Civil Govt', value: 7.36, color: '#8b5cf6' }, { label: 'Subsidies', value: 6.42, color: '#eab308' },
+                                    { label: 'PSDP', value: 5.41, color: '#64748b' }
+                                ];
+                                const revenueData = [
+                                    { label: 'Indirect Tax', value: 41.86, color: '#6366f1' }, { label: 'Direct Tax', value: 30.94, color: '#a78bfa' },
+                                    { label: 'Civil Admin', value: 14.35, color: '#c084fc' }, { label: 'Property', value: 2.68, color: '#f472b6' },
+                                    { label: 'Levies', value: 0.14, color: '#fb7185' }
+                                ];
+                                createSankeyFlow('expenditureSankey', 'Expenditure Flow', 'Total Spend', expenditureData, '#ef4444');
+                                createSankeyFlow('revenueSankey', 'Revenue Flow', 'Total Income', revenueData, '#6366f1');
+                            }, 200);
+                        }
+                        if (entry.target.querySelector('#socialSpendingChartContainer')) {
+                            createSocialSpendingChart();
+                        }
+                        if (entry.target.querySelector('#climateChartROCG')) {
+                            createRadialProgressChart('climateChartROCG', 7.7, 6.9, '#f59e0b'); // Amber color
+                            createRadialProgressChart('climateChartPSDP', 15.3, 8.2, '#10b981'); // Green color
+                        }
+                        observer.unobserve(entry.target);
                     }
                 });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+            Chart.register(ChartDataLabels);
+            Chart.defaults.font.family = 'Montserrat';
+            Chart.defaults.color = '#e2e8f0';
+            Chart.defaults.plugins.legend.position = 'bottom';
+            Chart.defaults.plugins.legend.labels.color = '#e2e8f0';
+            Chart.defaults.plugins.tooltip.enabled = false;
+            Chart.defaults.plugins.datalabels.color = '#fff';
+            Chart.defaults.plugins.datalabels.font = { weight: 'bold' };
+
+            const createGradient = (ctx, area, color1, color2) => {
+                if (!area) return color2;
+                const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+                gradient.addColorStop(0, color1);
+                gradient.addColorStop(1, color2);
+                return gradient;
+            };
+
+            const sectoralData = [
+                { sector: 'Defence', value: 2550, yoy: 20.16, color: '#38bdf8' },
+                { sector: 'Social Protection', value: 734.18, yoy: 20.77, color: '#10b981' },
+                { sector: 'Economic Affairs', value: 242.14, yoy: -32.31, color: '#f59e0b' },
+                { sector: 'Education', value: 112.68, yoy: 8.55, color: '#8b5cf6' },
+                { sector: 'Health', value: 31.9, yoy: 13.12, color: '#ef4444' }
+            ];
+
+            const sectorDetailsContainer = document.getElementById('sector-details-container');
+            sectoralData.forEach(item => {
+                const isPositive = item.yoy >= 0;
+                const yoyColor = isPositive ? 'text-green-400' : 'text-red-400';
+                const yoyIcon = isPositive ? '▲' : '▼';
+                sectorDetailsContainer.innerHTML += `
+                    <div class="flex items-center p-3 rounded-lg" style="background: rgba(255, 255, 255, 0.03);">
+                        <div class="w-2 h-8 rounded-full mr-4" style="background-color: ${item.color};"></div>
+                        <div class="flex-grow">
+                            <p class="text-white font-bold text-lg">${item.sector}</p>
+                            <p class="text-slate-300 text-sm">${item.value.toLocaleString()} Bn PKR</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-lg ${yoyColor}">${yoyIcon} ${Math.abs(item.yoy)}%</p>
+                            <p class="text-slate-400 text-sm">YoY</p>
+                        </div>
+                    </div>
+                `;
             });
-        }
 
-        function populateDistrictList(district, index) {
-            const item = document.createElement('div');
-            item.className = 'district-item';
-            item.dataset.districtName = district.name;
-            
-            const totalClassified = district.ruralCount + district.urbanCount;
-            const ruralPercent = totalClassified > 0 ? (district.ruralCount / totalClassified) * 100 : 0;
-            const urbanPercent = totalClassified > 0 ? (district.urbanCount / totalClassified) * 100 : 0;
-
-            item.innerHTML = `
-                <div class="district-header">
-                    <div class="district-name">${district.name}</div>
-                </div>
-                <div class="district-stats">
-                    <div class="stat-block">
-                        <div class="stat-value">${district.totalTrainers}</div>
-                        <div class="stat-label">Trainers</div>
-                    </div>
-                    <div class="stat-block">
-                        <div class="stat-value">${district.totalHeadCount.toLocaleString()}</div>
-                        <div class="stat-label">Beneficiaries</div>
-                    </div>
-                </div>
-                <div class="balance-bar">
-                    <div class="rural" style="width: ${ruralPercent}%" title="${ruralPercent.toFixed(1)}% Rural"></div>
-                    <div class="urban" style="width: ${urbanPercent}%" title="${urbanPercent.toFixed(1)}% Urban"></div>
-                </div>
-                <div class="balance-text">${ruralPercent.toFixed(0)}% Rural / ${urbanPercent.toFixed(0)}% Urban</div>
-            `;
-            item.style.animation = `fade-in-up 0.5s ${index * 0.04}s ease-out forwards`;
-            
-            item.addEventListener('click', () => {
-                document.querySelectorAll('.district-item').forEach(el => el.classList.remove('active'));
-                item.classList.add('active');
-                const tehsilsInDistrict = Object.values(district.tehsils);
-                if (tehsilsInDistrict.length > 0) {
-                    const bounds = tehsilsInDistrict.map(t => t.coords).filter(Boolean);
-                    if (bounds.length > 0) {
-                       map.fitBounds(bounds, { padding: [50, 50] });
+            new Chart(document.getElementById('sectoralAllocationsChart'), {
+                type: 'bar',
+                data: {
+                    labels: sectoralData.map(d => d.sector),
+                    datasets: [{
+                        label: 'Allocation (Rs Bn)',
+                        data: sectoralData.map(d => d.value),
+                        backgroundColor: sectoralData.map(d => `rgba(${parseInt(d.color.slice(1, 3), 16)},${parseInt(d.color.slice(3, 5), 16)},${parseInt(d.color.slice(5, 7), 16)},0.6)`),
+                        borderColor: sectoralData.map(d => d.color),
+                        borderWidth: 2,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
+                    animation: {
+                        duration: 1200,
+                        easing: 'easeOutCubic',
+                        from: 'start'
+                    },
+                    scales: {
+                        y: { display: false },
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'right',
+                            offset: 10,
+                            font: { size: 16 },
+                            formatter: (value) => `${value.toLocaleString()} Bn`,
+                            textShadow: '0 0 3px black'
+                        }
                     }
                 }
-                item.blur(); // Remove focus outline after click
             });
 
-            districtListContainer.appendChild(item);
-        }
-        
-        // --- INITIALIZATION KICK-OFF ---
-        (async () => {
-            const success = await loadData();
-            if (success) {
-                initializeDashboard();
+            new Chart(document.getElementById('sectoralTargetsChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Agriculture', 'Industry', 'Services'],
+                    datasets: [
+                        { label: '2024-25', data: [3.9, 4.4, 4.1], borderColor: '#f59e0b', tension: 0.4, pointBackgroundColor: '#f59e0b', pointRadius: 5 },
+                        {
+                            label: '2025-26', data: [4.1, 4.8, 4.5], borderColor: '#22c55e', tension: 0.4, pointBackgroundColor: '#22c55e', pointRadius: 5,
+                            backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, 'rgba(34, 197, 94, 0)', 'rgba(34, 197, 94, 0.5)'),
+                            fill: true,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' } } },
+                    plugins: {
+                        datalabels: {
+                            align: 'top',
+                            formatter: (value) => `${value}%`
+                        }
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('otherAllocationsChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['BISP', 'Pension', 'Subsidies', 'Grants', 'Salaries', 'Defence'],
+                    datasets: [{
+                        label: 'Allocation Range (2024-25 to 2025-26)',
+                        data: [[594, 716], [1014, 1065], [1383, 1180], [1777, 1928], [838, 971], [2122, 2550]],
+                        backgroundColor: (ctx) => {
+                            const value = ctx.raw[1] - ctx.raw[0];
+                            return value >= 0 ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+                        },
+                        borderColor: (ctx) => {
+                            const value = ctx.raw[1] - ctx.raw[0];
+                            return value >= 0 ? '#22c55e' : '#ef4444';
+                        },
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    scales: { y: { grid: { display: false }, ticks: { color: '#e2e8f0' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' } } },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            formatter: (value) => `${value[0]} Bn → ${value[1]} Bn`,
+                            color: 'white',
+                            anchor: 'end',
+                            align: 'right',
+                            offset: 8,
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                }
+            });
+
+            function createSankeyFlow(containerId, title, sourceText, data, color) {
+                const container = document.getElementById(containerId);
+                let pathHTML = '';
+                let endpointHTML = '';
+                const containerHeight = 450;
+                const totalValue = data.reduce((sum, item) => sum + item.value, 0);
+                const sourceNodeHeight = containerHeight * 0.7;
+                const startSourceY = (containerHeight - sourceNodeHeight) / 2;
+
+                let currentSourceY = startSourceY;
+                let currentEndpointY = 0;
+
+                data.sort((a, b) => b.value - a.value).forEach((item, index) => {
+                    const itemSourceHeight = item.value / totalValue * sourceNodeHeight;
+                    const itemEndpointHeight = (containerHeight - (data.length - 1) * 8) / data.length;
+                    const y1_start = currentSourceY;
+                    const y2_start = currentEndpointY;
+
+                    let pathD;
+                    if (containerId === 'revenueSankey') {
+                        const straightPart = 30;
+                        pathD = `M 0,${y1_start + itemSourceHeight / 2} L ${straightPart},${y1_start + itemSourceHeight / 2} C ${straightPart + 40},${y1_start + itemSourceHeight / 2} ${100 - 50},${y2_start + itemEndpointHeight / 2} 100,${y2_start + itemEndpointHeight / 2}`;
+                    } else {
+                        pathD = `M 0,${y1_start + itemSourceHeight / 2} C 50,${y1_start + itemSourceHeight / 2} 50,${y2_start + itemEndpointHeight / 2} 100,${y2_start + itemEndpointHeight / 2}`;
+                    }
+
+                    pathHTML += `
+                        <g class="sankey-path-group" id="path-group-${containerId}-${index}">
+                            <path class="sankey-path" d="${pathD}" fill="none" stroke="url(#gradient-${containerId}-${index})" style="--stroke-width: ${itemSourceHeight}px; animation-delay: ${index * 0.08}s"/>
+                        </g>`;
+
+                    endpointHTML += `
+                        <div class="sankey-endpoint" id="endpoint-${containerId}-${index}" style="border-color: ${item.color}; top: ${y2_start}px; height: ${itemEndpointHeight}px;" data-path-group-id="path-group-${containerId}-${index}">
+                            <div class="font-bold text-white">${item.label}</div>
+                            <div class="text-lg font-black" style="color:${item.color}">${item.value}%</div>
+                        </div>
+                    `;
+
+                    currentSourceY += itemSourceHeight;
+                    currentEndpointY += itemEndpointHeight + 8;
+                });
+
+                const definitions = data.map((item, index) => `
+                    <linearGradient id="gradient-${containerId}-${index}" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="${color}" stop-opacity="0.8" />
+                        <stop offset="100%" stop-color="${item.color}" stop-opacity="0.8" />
+                    </linearGradient>`).join('');
+
+                container.innerHTML = `
+                    <h3 class="text-xl font-bold text-white mb-4 text-center">${title}</h3>
+                    <div class="sankey-container">
+                        <div class="sankey-node">
+                            <div class="sankey-node-box" style="border-color:${color}; box-shadow: 0 0 20px ${color}, inset 0 0 10px ${color}; height: ${sourceNodeHeight}px">
+                                <span class="text-sm">${sourceText}</span>
+                                <span class="text-2xl font-bold">100%</span>
+                            </div>
+                        </div>
+                        <div class="sankey-paths">
+                           <svg width="100%" height="${containerHeight}" viewbox="0 0 100 ${containerHeight}" preserveAspectRatio="none">
+                                <defs>${definitions}</defs>
+                                ${pathHTML}
+                           </svg>
+                        </div>
+                        <div class="sankey-endpoints">${endpointHTML}</div>
+                    </div>
+                `;
+
+                const pathGroups = container.querySelectorAll('.sankey-path-group');
+                const endpoints = container.querySelectorAll('.sankey-endpoint');
+
+                const highlight = (groupId) => {
+                    container.classList.add('is-highlighted');
+                    pathGroups.forEach(g => g.classList.toggle('is-active', g.id === groupId));
+                    endpoints.forEach(e => e.classList.toggle('is-active', e.dataset.pathGroupId === groupId));
+                };
+
+                const clearHighlight = () => {
+                    container.classList.remove('is-highlighted');
+                    pathGroups.forEach(g => g.classList.remove('is-active'));
+                    endpoints.forEach(e => e.classList.remove('is-active'));
+                };
+
+                pathGroups.forEach(g => {
+                    g.addEventListener('mouseenter', () => highlight(g.id));
+                    g.addEventListener('mouseleave', clearHighlight);
+                });
+                endpoints.forEach(e => {
+                    e.addEventListener('mouseenter', () => highlight(e.dataset.pathGroupId));
+                    e.addEventListener('mouseleave', clearHighlight);
+                });
             }
-        })();
-    });
+
+            function createSocialSpendingChart() {
+                const ctx = document.getElementById('socialSpendingChart').getContext('2d');
+                const centerText = document.getElementById('socialSpendingCenterText');
+                const data = {
+                    totalSocialSpending: 878.9,
+                    bisp: 722.5,
+                    otherSocial: 11.7,
+                    education: 112.7,
+                    health: 32.0,
+                };
+
+                const chartData = {
+                    labels: ['BISP', 'Other', 'Education', 'Health'],
+                    datasets: [{
+                        data: [data.bisp, data.otherSocial, data.education, data.health],
+                        backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(16, 185, 129, 0.4)', 'rgba(139, 92, 246, 0.7)', 'rgba(239, 68, 68, 0.7)'],
+                        borderColor: ['#10b981', '#10b981', '#8b5cf6', '#ef4444'],
+                        borderWidth: 2,
+                        hoverOffset: 25,
+                        hoverBorderColor: '#fff',
+                        hoverBorderWidth: 4,
+                    }]
+                };
+
+                const customDataLabels = {
+                    id: 'customDataLabels',
+                    afterDraw: (chart) => {
+                        const { ctx, _active } = chart;
+                        ctx.save();
+                        chart.data.datasets.forEach((dataset, i) => {
+                            const meta = chart.getDatasetMeta(i);
+                            meta.data.forEach((element, index) => {
+                                if (_active && _active.length > 0 && _active[0].index === index) { return; }
+                                const { x, y, outerRadius, startAngle, endAngle } = element;
+                                const midAngle = startAngle + (endAngle - startAngle) / 2;
+                                const extend = (chart.width / 2 - outerRadius) * 0.3;
+                                const xLine = x + Math.cos(midAngle) * (outerRadius + extend);
+                                const yLine = y + Math.sin(midAngle) * (outerRadius + extend);
+                                const xLineEnd = xLine + Math.cos(midAngle) * 15;
+                                ctx.textAlign = midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2 ? 'right' : 'left';
+                                ctx.textBaseline = 'middle';
+                                ctx.font = '600 14px Montserrat';
+                                ctx.fillStyle = dataset.borderColor[index];
+                                ctx.beginPath();
+                                ctx.moveTo(x + Math.cos(midAngle) * outerRadius, y + Math.sin(midAngle) * outerRadius);
+                                ctx.lineTo(xLine, yLine);
+                                ctx.lineTo(xLineEnd, yLine);
+                                ctx.strokeStyle = dataset.borderColor[index];
+                                ctx.stroke();
+                                ctx.fillText(`${chart.data.labels[index]} (${dataset.data[index]} Bn)`, xLineEnd + (ctx.textAlign === 'right' ? -5 : 5), yLine);
+                            });
+                        });
+                        ctx.restore();
+                    }
+                }
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    plugins: [customDataLabels],
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        layout: { padding: { top: 50, bottom: 50, left: 50, right: 50 } },
+                        plugins: { legend: { display: false }, datalabels: { display: false } },
+                        onHover: (event, chartElement) => {
+                            const target = event.native.target;
+                            if (chartElement.length) {
+                                target.style.cursor = 'pointer';
+                                const index = chartElement[0].index;
+                                const label = chartData.labels[index];
+                                const value = chartData.datasets[0].data[index];
+                                centerText.innerHTML = `<span class="text-4xl font-black" style="color: ${chartData.datasets[0].borderColor[index]}; text-shadow: 0 0 10px ${chartData.datasets[0].borderColor[index]}">${value} Bn</span><span class="text-lg text-slate-300 mt-1">${label}</span>`;
+                            } else {
+                                target.style.cursor = 'default';
+                                centerText.innerHTML = `<span class="text-3xl font-black text-sky-300">${data.totalSocialSpending} Bn</span><span class="text-lg text-slate-300 mt-1">Total Social Spending</span>`;
+                            }
+                        }
+                    },
+                });
+                centerText.innerHTML = `<span class="text-3xl font-black text-sky-300">${data.totalSocialSpending} Bn</span><span class="text-lg text-slate-300 mt-1">Total Social Spending</span>`;
+            }
+
+            function createRadialProgressChart(canvasId, valueFY25, valueFY26, color) {
+                const centerTextPlugin = {
+                    id: 'centerTextPlugin',
+                    afterDraw: chart => {
+                        let ctx = chart.ctx;
+                        ctx.save();
+                        const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                        const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        ctx.font = `900 3.5rem Montserrat`;
+                        ctx.fillStyle = color;
+                        ctx.filter = `drop-shadow(0 0 5px ${color})`;
+                        ctx.fillText(`${valueFY26}%`, centerX, centerY);
+                        ctx.filter = 'none';
+
+                        ctx.font = `500 1rem Montserrat`;
+                        ctx.fillStyle = '#e2e8f0';
+                        ctx.fillText('FY 25-26', centerX, centerY + 40);
+
+                        ctx.restore();
+                    }
+                };
+
+                new Chart(document.getElementById(canvasId), {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'FY 2025-26',
+                                data: [valueFY26, 100 - valueFY26],
+                                backgroundColor: [color, 'rgba(255, 255, 255, 0.05)'],
+                                borderColor: [color, 'rgba(255, 255, 255, 0.1)'],
+                                borderWidth: 2,
+                            },
+                            {
+                                label: 'FY 2024-25',
+                                data: [valueFY25, 100 - valueFY25],
+                                backgroundColor: [`${color}60`, 'transparent'],
+                                borderColor: 'transparent',
+                                borderWidth: 0,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '80%',
+                        animation: {
+                            animateRotate: true,
+                            duration: 1500
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false },
+                            datalabels: {
+                                formatter: (value, context) => {
+                                    if (context.dataIndex === 1) { return null; }
+                                    return value.toFixed(1) + '%';
+                                },
+                                font: { weight: 'bold', size: 14 },
+                                color: '#fff'
+                            }
+                        }
+                    },
+                    plugins: [centerTextPlugin]
+                });
+            }
+
+            const taxSlabs = [
+                { range: "0 - 0.6 Mn", old: "Zero Tax", new: "Zero Tax", relief: "No Change", color: "slate" },
+                { range: "0.6 - 1.2 Mn", old: "5% Tax", new: "1% Tax", relief: "Major Relief", color: "green" },
+                { range: "1.2 - 2.2 Mn", old: "30k + 15%", new: "6k + 11%", relief: "Major Relief", color: "green" },
+                { range: "2.2 - 3.2 Mn", old: "180k + 25%", new: "346k + 23%", relief: "Relief", color: "teal" },
+                { range: "3.2 - 4.1 Mn", old: "430k + 30%", new: "616k + 30%", relief: "Relief", color: "teal" },
+                { range: "4.1 Mn+", old: "700k + 35%", new: "616k + 35%", relief: "Minor Relief", color: "sky" }
+            ];
+            const slabContainer = document.getElementById('tax-slab-container');
+            const reliefColors = { green: 'bg-green-500/20 text-green-300', teal: 'bg-teal-500/20 text-teal-300', sky: 'bg-sky-500/20 text-sky-300', slate: 'bg-slate-500/20 text-slate-400' };
+            taxSlabs.forEach(slab => {
+                slabContainer.innerHTML += `
+                    <div class="stat-card">
+                        <p class="text-lg font-bold text-white">${slab.range}</p>
+                        <div class="my-3 text-left">
+                            <p class="text-sm text-slate-400">Old: <span class="font-semibold text-slate-300">${slab.old}</span></p>
+                            <p class="text-sm text-slate-400">New: <span class="font-semibold text-slate-300">${slab.new}</span></p>
+                        </div>
+                        <span class="px-3 py-1 text-sm font-semibold rounded-full ${reliefColors[slab.color]}">${slab.relief}</span>
+                    </div>
+                `;
+            });
+
+            // --- NEW SANKEY CHART LOGIC START ---
+            if (document.getElementById('budget-flow-sankey')) {
+                const sankeyLinks = [
+                    { from: 'node-tax-revenue', to: 'node-total-revenue', value: 14131, color: '#4ade80', stream: 'revenue' },
+                    { from: 'node-non-tax-revenue', to: 'node-total-revenue', value: 5147, color: '#4ade80', stream: 'revenue' },
+                    { from: 'node-domestic-borrow', to: 'node-total-borrowing', value: 6505, color: '#f87171', stream: 'borrowing' },
+                    { from: 'node-foreign-borrow', to: 'node-total-borrowing', value: 106, color: '#f87171', stream: 'borrowing' },
+                    { from: 'node-total-revenue', to: 'node-total-spend', value: 19278, color: '#2dd4bf', stream: 'revenue' },
+                    { from: 'node-total-borrowing', to: 'node-total-spend', value: 6611, color: '#fb923c', stream: 'borrowing' },
+                    { from: 'node-privatization', to: 'node-total-spend', value: 86, color: '#facc15', stream: 'revenue' },
+                    { from: 'node-total-spend', to: 'node-provinces', value: 8206, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-total-spend', to: 'node-federal-budget', value: 17573, color: '#c084fc', stream: 'federal' },
+                    { from: 'node-provinces', to: 'node-punjab', value: 4076, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-provinces', to: 'node-sindh', value: 2044, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-provinces', to: 'node-kpk', value: 1343, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-provinces', to: 'node-baluchistan', value: 743, color: '#a78bfa', stream: 'provinces' },
+                    { from: 'node-federal-budget', to: 'node-current-spend', value: 16286, color: '#60a5fa', stream: 'federal-current' },
+                    { from: 'node-federal-budget', to: 'node-dev-spend', value: 1287, color: '#34d399', stream: 'federal-dev' },
+                    { from: 'node-current-spend', to: 'node-interest', value: 8207, color: '#ef4444', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-defense', value: 2550, color: '#60a5fa', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-pension', value: 1055, color: '#f97316', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-grants', value: 1928, color: '#eab308', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-subsidies', value: 1186, color: '#d946ef', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-running-gov', value: 971, color: '#8b5cf6', stream: 'federal-current' },
+                    { from: 'node-current-spend', to: 'node-emergencies', value: 389, color: '#f43f5e', stream: 'federal-current' },
+                    { from: 'node-dev-spend', to: 'node-psdp', value: 1000, color: '#22c55e', stream: 'federal-dev' },
+                    { from: 'node-dev-spend', to: 'node-lending', value: 287, color: '#10b981', stream: 'federal-dev' },
+                ];
+
+                function drawSankeyPaths() {
+                    const svg = document.querySelector('#budget-flow-sankey #sankey-paths-svg');
+                    const container = document.getElementById('sankey-chart-area');
+                    if (!svg || !container) return;
+
+                    svg.innerHTML = '';
+                    const containerRect = container.getBoundingClientRect();
+                    const totalValue = 25865;
+                    const maxStrokeWidth = 60;
+
+                    sankeyLinks.forEach((link) => {
+                        const fromNode = document.getElementById(link.from);
+                        const toNode = document.getElementById(link.to);
+                        if (!fromNode || !toNode) return;
+
+                        const fromRect = fromNode.getBoundingClientRect();
+                        const toRect = toNode.getBoundingClientRect();
+
+                        const startX = fromRect.right - containerRect.left;
+                        const startY = fromRect.top - containerRect.top + fromRect.height / 2;
+                        const endX = toRect.left - containerRect.left;
+                        const endY = toRect.top - containerRect.top + toRect.height / 2;
+
+                        const controlX1 = startX + (endX - startX) / 2;
+
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path.setAttribute('d', `M ${startX} ${startY} C ${controlX1} ${startY}, ${controlX1} ${endY}, ${endX} ${endY}`);
+                        path.setAttribute('stroke', link.color);
+                        path.setAttribute('stroke-width', (link.value / totalValue) * maxStrokeWidth);
+                        path.setAttribute('stroke-opacity', 0.6);
+                        path.classList.add('sankey-path');
+                        path.dataset.stream = link.stream;
+                        svg.appendChild(path);
+                    });
+                }
+
+                function setupSankeyInteractivity() {
+                    const container = document.getElementById('sankey-chart-area');
+                    if (!container) return;
+                    const nodes = container.querySelectorAll('.sankey-node');
+                    const paths = container.querySelectorAll('.sankey-path');
+
+                    const highlightStream = (stream) => {
+                        if (!stream) return;
+                        container.classList.add('is-highlighted');
+                        nodes.forEach(n => n.classList.toggle('is-active', n.dataset.stream === stream || n.dataset.stream === 'spend'));
+                        paths.forEach(p => p.classList.toggle('is-active', p.dataset.stream === stream));
+                    };
+
+                    const clearHighlight = () => {
+                        container.classList.remove('is-highlighted');
+                        nodes.forEach(n => n.classList.remove('is-active'));
+                        paths.forEach(p => p.classList.remove('is-active'));
+                    };
+
+                    nodes.forEach(node => {
+                        node.addEventListener('mouseenter', () => highlightStream(node.dataset.stream));
+                        node.addEventListener('mouseleave', clearHighlight);
+                    });
+                }
+
+                drawSankeyPaths();
+                setupSankeyInteractivity();
+
+                new ResizeObserver(drawSankeyPaths).observe(document.getElementById('sankey-chart-area'));
+            }
+            // --- NEW SANKEY CHART LOGIC END ---
+
+        });
     </script>
 </body>
+
 </html>
