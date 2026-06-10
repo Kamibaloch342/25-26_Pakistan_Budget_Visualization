@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget at a Glance — FY 2026-27 | SDPI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080d1a;
+            --surface: rgba(15, 23, 42, 0.5);
+            --border: rgba(255, 255, 255, 0.09);
+            --glow-a: #38bdf8;
+            /* sky */
+            --glow-b: #818cf8;
+            /* indigo */
+            --green: #4ade80;
+            --red: #f87171;
+            --amber: #fbbf24;
+            --purple: #c084fc;
+
+            /* ── FY COLOURS – change these two lines when budget drops ── */
+            --fy-prev: #4299e1;
+            /* FY 2025-26 bar/line colour */
+            --fy-curr: #e53e3e;
+            /* FY 2026-27 bar/line colour */
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        /* ─── noise texture overlay ─── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+            opacity: 0.4;
+        }
+
+        /* ─── gradient orbs ─── */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            top: -200px;
+            left: -200px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.12), transparent 70%);
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            bottom: 0;
+            right: -150px;
+            background: radial-gradient(circle, rgba(129, 140, 248, 0.1), transparent 70%);
+        }
+
+        /* ─── CARD ─── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            padding: 2.5rem 3rem;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 4px 40px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card:hover {
+            border-color: rgba(56, 189, 248, 0.25);
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.08), 0 4px 40px rgba(0, 0, 0, 0.35);
+        }
+
+        /* ─── SECTION HEADING ─── */
+        .sec-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: -0.01em;
+        }
+
+        .sec-title .badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--glow-a);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            text-transform: uppercase;
+        }
+
+        /* ─── STAT CARDS ─── */
+        .kpi-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.25rem 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+        }
+
+        .kpi-card .kpi-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .kpi-card .kpi-value {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin: 0.3rem 0 0;
+        }
+
+        .kpi-card .kpi-unit {
+            font-size: 0.8rem;
+            font-weight: 400;
+            opacity: 0.6;
+        }
+
+        /* ─── MACRO TABLE ─── */
+        .macro-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .macro-table th {
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #64748b;
+            padding: 0.6rem 1rem;
+            text-align: right;
+        }
+
+        .macro-table th:first-child {
+            text-align: left;
+        }
+
+        .macro-table td {
+            padding: 0.65rem 1rem;
+            font-size: 0.88rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .macro-table td:first-child {
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .macro-table td:not(:first-child) {
+            text-align: right;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+        }
+
+        .macro-table tr:hover td {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .delta-up {
+            color: #4ade80;
+        }
+
+        .delta-down {
+            color: #f87171;
+        }
+
+        .delta-neu {
+            color: #94a3b8;
+        }
+
+        /* ─── PIE LEGENDS ─── */
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ─── SANKEY ─── */
+        #sankey-chart-area {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+            position: relative;
+            padding: 20px 0;
+            min-height: 820px;
+        }
+
+        #sankey-paths-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .sankey-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .sankey-node {
+            background-color: rgba(8, 13, 26, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 0.65rem;
+            padding: 0.45rem 0.8rem;
+            text-align: center;
+            font-size: 0.82rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        #sankey-chart-area.is-highlighted .sankey-node {
+            opacity: 0.3;
+            transform: scale(0.97);
+        }
+
+        #sankey-chart-area .sankey-node.is-active {
+            opacity: 1 !important;
+            transform: scale(1.05);
+            border-color: var(--glow-a) !important;
+            box-shadow: 0 0 12px var(--glow-a);
+        }
+
+        #sankey-chart-area.is-highlighted .sankey-path {
+            opacity: 0.07;
+        }
+
+        #sankey-chart-area .sankey-path.is-active {
+            opacity: 1 !important;
+        }
+
+        .sankey-node .node-title {
+            font-weight: 600;
+            color: #94a3b8;
+            font-size: 0.75em;
+        }
+
+        .sankey-node .node-value {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.05em;
+            color: #f1f5f9;
+        }
+
+        .sankey-node .node-value::before {
+            content: 'Rs. ';
+            font-size: 0.65em;
+            font-weight: 400;
+            color: #64748b;
+        }
+
+        .sankey-node .node-value::after {
+            content: ' Bn';
+            font-size: 0.65em;
+            font-weight: 400;
+            color: #64748b;
+        }
+
+        /* colour side-borders per stream */
+        #node-tax-revenue,
+        #node-non-tax-revenue {
+            border-left: 3px solid #4ade80;
+        }
+
+        #node-privatization {
+            border-left: 3px solid #fbbf24;
+        }
+
+        #node-domestic-borrow,
+        #node-foreign-borrow {
+            border-left: 3px solid #f87171;
+        }
+
+        #node-interest,
+        #node-pension,
+        #node-subsidies {
+            border-right: 3px solid #ef4444;
+        }
+
+        #node-defense {
+            border-right: 3px solid #60a5fa;
+        }
+
+        #node-psdp,
+        #node-lending {
+            border-right: 3px solid #22c55e;
+        }
+
+        #node-property-tax,
+        #node-civil-admin,
+        #node-levies {
+            border-left: 3px solid #c084fc;
+        }
+
+        /* Grid rows for Sankey nodes */
+        #node-total-revenue {
+            grid-row: 2 / span 4;
+        }
+
+        #node-total-borrowing {
+            grid-row: 7 / span 3;
+        }
+
+        #node-total-spend {
+            grid-row: 1 / span 10;
+        }
+
+        #node-provinces {
+            grid-row: 1 / span 4;
+        }
+
+        #node-federal-budget {
+            grid-row: 5 / span 6;
+        }
+
+        #node-current-spend {
+            grid-row: 3 / span 4;
+        }
+
+        #node-dev-spend {
+            grid-row: 8 / span 2;
+        }
+
+        /* ─── slope chart ─── */
+        .slope-row {
+            position: relative;
+            height: 110px;
+        }
+
+        .slope-line {
+            position: absolute;
+            height: 2px;
+            background: var(--border);
+            top: 50%;
+            left: 18%;
+            width: 64%;
+            transform-origin: left center;
+            animation: drawLine 1.4s 0.4s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+            transform: scaleX(0);
+        }
+
+        @keyframes drawLine {
+            to {
+                transform: scaleX(1);
+            }
+        }
+
+        .data-dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            border: 2px solid #fff;
+            z-index: 2;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .dot-start {
+            animation-delay: 1.6s;
+            left: 18%;
+        }
+
+        .dot-end {
+            animation-delay: 1.8s;
+            left: 82%;
+        }
+
+        @keyframes popIn {
+            to {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .slope-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            top: -32px;
+            opacity: 0;
+            animation: fadeIn 0.4s 2.1s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ─── revenue flow ─── */
+        .rev-node {
+            border-radius: 0.6rem;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid var(--border);
+            background: rgba(8, 13, 26, 0.8);
+            transition: all 0.3s;
+        }
+
+        .rev-node:hover {
+            transform: scale(1.03);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        /* ─── 4D comparison bars ─── */
+        .bar-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.8rem;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.07);
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            width: 0;
+        }
+
+        /* animations for scroll reveal */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.85);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .anim-zoom {
+            animation: zoomIn 0.8s forwards ease-out;
+        }
+
+        .anim-up {
+            animation: fadeInUp 0.7s forwards ease-out;
+        }
+
+
+        /* ─── BEAUTIFUL ANIMATIONS ─── */
+        @keyframes drawLine {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .card {
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease !important;
+        }
+
+        .card:hover {
+            transform: translateY(-6px) scale(1.01) !important;
+            border-color: rgba(56, 189, 248, 0.4) !important;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .kpi-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-6px) scale(1.04) !important;
+            border-color: rgba(56, 189, 248, 0.5) !important;
+            box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.2), 0 0 15px rgba(56, 189, 248, 0.1) !important;
+        }
+
+        .sec-title svg {
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card:hover .sec-title svg {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        .rev-node {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        .rev-node:hover {
+            transform: scale(1.06) translateY(-2px) !important;
+            border-color: rgba(56, 189, 248, 0.6) !important;
+            box-shadow: 0 8px 25px -5px rgba(56, 189, 248, 0.25) !important;
+        }
+
+        /* Staggered delays for reveal */
+        .delay-100 {
+            transition-delay: 100ms !important;
+        }
+
+        .delay-200 {
+            transition-delay: 200ms !important;
+        }
+
+        .delay-300 {
+            transition-delay: 300ms !important;
+        }
+
+        /* tooltip */
+        .custom-tooltip {
+            position: absolute;
+            pointer-events: none;
+            background: rgba(8, 13, 26, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 0.6rem;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.78rem;
+            color: #e2e8f0;
+            white-space: nowrap;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+    </style>
+</head>
+
+<body class="p-4 sm:p-6 md:p-8">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+
+    <!-- ═══════════════════════════════ STICKY HEADER ═══════════════════════════════ -->
+    <div class="sticky top-0 md:top-2 z-50 max-w-7xl mx-auto rounded-b-2xl md:rounded-2xl backdrop-blur-xl bg-[#080d1a]/85 border border-t-0 md:border-t border-slate-700/50 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.7)] transition-all duration-300 py-3 sm:py-4 mb-8"
+        style="backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
+        <div class="px-4 sm:px-6 md:px-8 flex items-center justify-center sm:justify-start gap-4 sm:gap-6">
+            <!-- SDPI Hexagon Logo SVG -->
+            <div class="flex-shrink-0 drop-shadow-[0_0_15px_rgba(129,140,248,0.2)]">
+                <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="50,2 95,28 95,72 50,98 5,72 5,28" stroke="#cbd5e1" stroke-width="2" fill="#1e1b4b"
+                        stroke-linejoin="round" />
+                    <polygon points="50,6 91,30 91,70 50,94 9,70 9,30" stroke="#818cf8" stroke-width="1.5"
+                        fill="transparent" stroke-linejoin="round" />
+                    <path d="M50,15 L50,45 M35,30 L50,45 M65,30 L50,45" stroke="#ffffff" stroke-width="5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M20,65 L45,50 M25,45 L45,50 M35,75 L45,50" stroke="#ffffff" stroke-width="5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M80,65 L55,50 M75,45 L55,50 M65,75 L55,50" stroke="#ffffff" stroke-width="5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+
+            <!-- SDPI Text Logo -->
+            <div class="hidden md:flex flex-col justify-center border-r border-slate-700/60 pr-6 mr-2">
+                <span class="text-[2.5rem] font-extrabold tracking-tight text-slate-300 leading-none"
+                    style="font-family: Arial, sans-serif;">SDPI</span>
+                <span class="text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Sustainable Development
+                    Policy Institute</span>
+            </div>
+
+            <!-- Main Title Area -->
+            <div class="flex flex-col text-left">
+                <span class="text-[0.6rem] text-sky-400 font-bold uppercase tracking-[0.2em] mb-0.5 md:hidden">SDPI
+                    Pakistan</span>
+                <span
+                    class="text-[0.6rem] text-sky-400 font-bold uppercase tracking-[0.2em] mb-0.5 hidden md:block">Sustainable
+                    Development Policy Institute</span>
+                <h1
+                    class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-none mb-1 drop-shadow-md">
+                    Budget at a Glance</h1>
+                <div class="text-sm sm:text-base font-bold text-slate-300 mb-0.5 tracking-wide">FY 2026–27 Analysis
+                </div>
+                <div class="text-[0.6rem] sm:text-[0.65rem] text-slate-500 font-medium hidden sm:block">Developed by
+                    CASPEE</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto">
+
+
+
+        <!-- ═══════════════════ SECTION 1 · MACRO SNAPSHOT ══════════════════════ -->
+        <div class="card reveal delay-0">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Macro Snapshot
+                <span class="badge">Tabulated Comparison</span>
+                <span class="ml-auto text-xs text-slate-500 font-normal italic">* Dummy values — replace after budget
+                    announcement</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="macro-table">
+                    <thead>
+                        <tr>
+                            <th>Indicator</th>
+                            <th>FY 2024-25 (Actual)</th>
+                            <th>FY 2025-26 (Revised)</th>
+                            <th>FY 2026-27 (Target)</th>
+                            <th>YoY Δ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="macro-tbody">
+                        <!-- Populated by JS – edit MACRO_DATA below to update -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 2 · KEY DIRECTIVES ══════════════════════ -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+            <div class="lg:col-span-2 card reveal delay-100">
+                <div class="sec-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Key Directives & Fiscal Summary
+                    <span class="badge">FY 2026-27</span>
+                </div>
+                <ul class="space-y-4 text-slate-300 text-sm" id="directives-list">
+                    <!-- Populated by JS – edit DIRECTIVES below -->
+                </ul>
+            </div>
+
+            <div class="card reveal delay-200">
+                <div class="sec-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Primary Challenges
+                </div>
+                <ul class="space-y-3 text-slate-300 text-sm" id="challenges-list">
+                    <!-- Populated by JS – edit CHALLENGES below -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 3 · 4Ds KPI + BAR CHART ════════════════ -->
+        <div class="card mt-8 reveal delay-0">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5" />
+                </svg>
+                The 4 Ds of Expenditure
+                <span class="badge">Comparison Bar Chart</span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                <!-- KPI tiles -->
+                <div>
+                    <div class="grid grid-cols-2 gap-6" id="kpi-4d-grid"></div>
+                    <div class="mt-4 text-center border-t border-slate-700 pt-4">
+                        <p class="text-slate-400 text-xs uppercase tracking-widest">Total Current Expenditures FY 26-27
+                        </p>
+                        <p class="text-5xl font-extrabold text-white mt-1 animate-float" id="total-exp-counter"
+                            class="animate-pulse" data-count="0">—</p>
+                        <p class="text-sm font-medium text-slate-500">Billion PKR (Dummy — update post-budget)</p>
+                    </div>
+                </div>
+                <!-- Comparison chart -->
+                <div class="h-80"><canvas id="fourDChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 4 · SECTOR ALLOCATIONS ════════════════ -->
+        <div class="card mt-8 reveal delay-100">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                </svg>
+                Major Sector Allocations
+                <span class="badge">Pie Chart Comparison</span>
+            </div>
+            <div class="flex flex-col xl:flex-row gap-12 items-center pt-4">
+                <div class="w-full xl:w-1/3">
+                    <p class="text-xs text-slate-500 uppercase tracking-widest mb-4">FY 2025-26 vs FY 2026-27 (Rs
+                        Billion)</p>
+                    <div id="sector-legend" class="flex flex-col gap-5"></div>
+                </div>
+                <div class="h-[400px] relative w-full xl:w-2/3" id="pie-container">
+                    <p
+                        class="text-center text-xs text-slate-500 font-bold tracking-widest mb-4 absolute top-0 w-full z-20">
+                        Inner: FY 2025-26 &nbsp;&nbsp;|&nbsp;&nbsp; Outer: FY 2026-27</p>
+                    <canvas id="sectorNestedPie" class="relative z-10"></canvas>
+                    <div id="pie-labels-overlay" class="absolute inset-0 pointer-events-none z-30"></div>
+                    <!-- Center Total Display -->
+                    <div
+                        class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0 mt-8">
+                        <span class="text-[0.65rem] text-slate-400 font-bold uppercase tracking-widest">Total
+                            FY26-27</span>
+                        <span class="text-3xl font-extrabold text-white tracking-tight" id="pie-center-total"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 5 · REVENUE FLOW ══════════════════════ -->
+        <div class="card mt-8 reveal delay-200">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                Total Revenue Flow Comparison
+                <span class="badge">FY 2025-26 vs FY 2026-27</span>
+                <span class="ml-auto text-xs text-slate-500 font-normal italic">* Dummy — replace with announced
+                    figures</span>
+            </div>
+            <div class="flex flex-col xl:flex-row gap-8 overflow-x-auto pb-4">
+                <div class="flex-1 min-w-[500px]">
+                    <p class="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-2">FY 2025-26</p>
+                    <div id="revenue-flow-prev"></div>
+                </div>
+                <div class="w-px bg-slate-700/50 hidden xl:block"></div>
+                <div class="h-px bg-slate-700/50 xl:hidden w-full"></div>
+                <div class="flex-1 min-w-[500px]">
+                    <p class="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-2">FY 2026-27 (Expected)
+                    </p>
+                    <div id="revenue-flow-curr"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 6 · MAIN SANKEY ═══════════════════════ -->
+        <div class="card mt-8 reveal delay-0" id="budget-flow-sankey">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2 12h3m3 0h3m3 0h3m3 0h3M5 12V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2v-5Z" />
+                </svg>
+                Pakistan Budget 2026-27: Flow of Funds
+                <span class="badge">Hover to highlight streams</span>
+                <span class="ml-auto text-xs text-slate-500 font-normal italic">Figures in Rs. Billion — dummies until
+                    budget</span>
+            </div>
+            <div id="sankey-chart-area">
+                <svg id="sankey-paths-svg"></svg>
+
+                <!-- Col 1: Revenue sources -->
+                <div class="sankey-column" style="grid-column:1">
+                    <div class="sankey-node" id="node-tax-revenue" data-value="14900" data-stream="revenue"><span
+                            class="node-title">Tax Revenue</span><span class="node-value">14,900</span></div>
+                    <div class="sankey-node" id="node-property-tax" data-value="500" data-stream="revenue"><span
+                            class="node-title">Property Tax</span><span class="node-value">500</span></div>
+                    <div class="sankey-node" id="node-civil-admin" data-value="300" data-stream="revenue"><span
+                            class="node-title">Civil Admin</span><span class="node-value">300</span></div>
+                    <div class="sankey-node" id="node-levies" data-value="820" data-stream="revenue"><span
+                            class="node-title">Levies</span><span class="node-value">820</span></div>
+                    <div class="sankey-node" id="node-non-tax-revenue" data-value="5500" data-stream="revenue"><span
+                            class="node-title">Non-Tax Revenue</span><span class="node-value">5,500</span></div>
+                    <div class="sankey-node" id="node-privatization" data-value="100" data-stream="revenue"><span
+                            class="node-title">Privatization</span><span class="node-value">100</span></div>
+                    <div class="sankey-node" id="node-domestic-borrow" data-value="6800" data-stream="borrowing"><span
+                            class="node-title">Domestic Borrowing</span><span class="node-value">6,800</span></div>
+                    <div class="sankey-node" id="node-foreign-borrow" data-value="200" data-stream="borrowing"><span
+                            class="node-title">Foreign Borrowing</span><span class="node-value">200</span></div>
+                </div>
+
+                <!-- Col 2: Aggregates -->
+                <div class="sankey-column" style="grid-column:2">
+                    <div class="sankey-node" id="node-total-revenue" data-value="22120" data-stream="revenue"><span
+                            class="node-title">Total Revenue</span><span class="node-value">22,120</span></div>
+                    <div class="sankey-node" id="node-total-borrowing" data-value="7000" data-stream="borrowing"><span
+                            class="node-title">Total Borrowing</span><span class="node-value">7,000</span></div>
+                </div>
+
+                <!-- Col 3: Total spend -->
+                <div class="sankey-column" style="grid-column:3">
+                    <div class="sankey-node" id="node-total-spend" data-value="29120" data-stream="spend"><span
+                            class="node-title">Total Spend</span><span class="node-value">29,120</span></div>
+                </div>
+
+                <!-- Col 4: Province vs Federal split -->
+                <div class="sankey-column" style="grid-column:4">
+                    <div class="sankey-node" id="node-provinces" data-value="9000" data-stream="provinces"><span
+                            class="node-title">To Provinces (NFC)</span><span class="node-value">9,000</span></div>
+                    <div class="sankey-node" id="node-federal-budget" data-value="18500" data-stream="federal"><span
+                            class="node-title">Federal Budget</span><span class="node-value">18,500</span></div>
+                </div>
+
+                <!-- Col 5: Province breakdown + Current/Dev -->
+                <div class="sankey-column" style="grid-column:5">
+                    <div class="sankey-node" id="node-punjab" data-value="4470" data-stream="provinces"><span
+                            class="node-title">Punjab</span><span class="node-value">4,470</span></div>
+                    <div class="sankey-node" id="node-sindh" data-value="2240" data-stream="provinces"><span
+                            class="node-title">Sindh</span><span class="node-value">2,240</span></div>
+                    <div class="sankey-node" id="node-kpk" data-value="1470" data-stream="provinces"><span
+                            class="node-title">KP</span><span class="node-value">1,470</span></div>
+                    <div class="sankey-node" id="node-baluchistan" data-value="820" data-stream="provinces"><span
+                            class="node-title">Balochistan</span><span class="node-value">820</span></div>
+                    <div class="sankey-node" id="node-current-spend" data-value="16900" data-stream="federal-current">
+                        <span class="node-title">Current Expenditure</span><span class="node-value">16,900</span>
+                    </div>
+                    <div class="sankey-node" id="node-dev-spend" data-value="1600" data-stream="federal-dev"><span
+                            class="node-title">Development (PSDP)</span><span class="node-value">1,600</span></div>
+                </div>
+
+                <!-- Col 6: Current breakdown -->
+                <div class="sankey-column" style="grid-column:6">
+                    <div class="sankey-node" id="node-interest" data-value="8500" data-stream="federal-current"><span
+                            class="node-title">Interest Payments</span><span class="node-value">8,500</span></div>
+                    <div class="sankey-node" id="node-defense" data-value="2800" data-stream="federal-current"><span
+                            class="node-title">Defence</span><span class="node-value">2,800</span></div>
+                    <div class="sankey-node" id="node-pension" data-value="1100" data-stream="federal-current"><span
+                            class="node-title">Pension</span><span class="node-value">1,100</span></div>
+                    <div class="sankey-node" id="node-grants" data-value="2000" data-stream="federal-current"><span
+                            class="node-title">Grants & Transfers</span><span class="node-value">2,000</span></div>
+                    <div class="sankey-node" id="node-subsidies" data-value="1200" data-stream="federal-current"><span
+                            class="node-title">Subsidies</span><span class="node-value">1,200</span></div>
+                    <div class="sankey-node" id="node-running-gov" data-value="1000" data-stream="federal-current"><span
+                            class="node-title">Running of Govt</span><span class="node-value">1,000</span></div>
+                    <div class="sankey-node" id="node-emergencies" data-value="300" data-stream="federal-current"><span
+                            class="node-title">Emergencies</span><span class="node-value">300</span></div>
+                    <div class="sankey-node" id="node-psdp" data-value="1300" data-stream="federal-dev"><span
+                            class="node-title">Federal PSDP</span><span class="node-value">1,300</span></div>
+                    <div class="sankey-node" id="node-lending" data-value="300" data-stream="federal-dev"><span
+                            class="node-title">Net Lending</span><span class="node-value">300</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 7 · GENDER-SENSITIVE SLOPE ═══════════════ -->
+        <div class="card mt-8 reveal delay-100">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M12 12a4 4 0 100-8 4 4 0 000 8z" />
+                </svg>
+                Gender-Sensitive Allocation Shift
+                <span class="badge">Slope Chart</span>
+            </div>
+            <p class="text-slate-400 text-sm -mt-3 mb-6">Comparative view of gender-sensitive budget allocations as
+                share of total expenditure.</p>
+            <div class="grid grid-cols-[auto_1fr_auto] items-center gap-5" id="slope-chart-host"></div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 8 · TAX SLABS ════════════════════════ -->
+        <div class="card mt-8 reveal">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Income Tax Slabs Comparison
+                <span class="badge">FY 2025-26 → 2026-27</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" id="tax-slab-container"></div>
+        </div>
+
+    </div><!-- /max-w-7xl -->
+
+    <script>
+        /* ════════════════════════════════════════════════════════════════════
+           ██████████████   EDIT THESE DATA OBJECTS AFTER BUDGET  ████████████
+           ════════════════════════════════════════════════════════════════════
+           All dummy numbers are clearly labelled.
+           Once the FY 2026-27 budget is announced:
+             1. Replace values in MACRO_DATA (fy2627 column + delta)
+             2. Update FOUR_D_COMPONENTS with actual sub-items
+             3. Update SECTOR_DATA with announced allocations
+             4. Update SANKEY_NODES (edit each node's data-value in HTML above)
+             5. Update SANKEY_LINKS amounts below
+             6. Update REVENUE_FLOW_FY2526 & REVENUE_FLOW_FY2627 amounts
+           ════════════════════════════════════════════════════════════════════ */
+
+        // ─── 1. MACRO SNAPSHOT TABLE ─────────────────────────────────────────────
+        const MACRO_DATA = [
+            // Core Indicators
+            { label: "GDP Growth (%)", fy2425: "2.5%", fy2526: "3.0%", fy2627: "DUMMY 4.5%", delta: "+1.5pp", dir: "up", isGroup: false },
+            { label: "GDP Per Capita (USD)", fy2425: "1,523", fy2526: "1,581", fy2627: "DUMMY 1,650", delta: "+4.4%", dir: "up", isGroup: false },
+            { label: "CPI Inflation (%)", fy2425: "23.4%", fy2526: "12.0%", fy2627: "DUMMY 9.5%", delta: "−2.5pp", dir: "up", isGroup: false },
+            { label: "Unemployment (%)", fy2425: "6.3%", fy2526: "6.0%", fy2627: "DUMMY 5.7%", delta: "−0.3pp", dir: "up", isGroup: false },
+            { label: "PKR / USD (avg)", fy2425: "278", fy2526: "282", fy2627: "DUMMY 285", delta: "+1.1%", dir: "neu", isGroup: false },
+
+            // Deficits Group
+            { label: "Fiscal Deficit (% GDP)", fy2425: "7.4%", fy2526: "5.9%", fy2627: "DUMMY 4.5%", delta: "−1.4pp", dir: "up", isGroup: true, groupHeader: "Deficits" },
+            { label: "Trade Deficit (USD Bn)", fy2425: "24.2", fy2526: "22.0", fy2627: "DUMMY 20.0", delta: "−9.1%", dir: "up", isGroup: true },
+            { label: "Current Account (USD Bn)", fy2425: "−0.7", fy2526: "−1.0", fy2627: "DUMMY −1.5", delta: "−0.5", dir: "down", isGroup: true },
+            { label: "BoP Deficit (USD Bn)", fy2425: "−1.2", fy2526: "−1.8", fy2627: "DUMMY −2.0", delta: "−0.2", dir: "down", isGroup: true },
+        ];
+
+        // ─── 2. KEY DIRECTIVES ───────────────────────────────────────────────────
+        const DIRECTIVES = [
+            { icon: "➔", title: "Total Outlay", body: "DUMMY — Set at <strong class='text-sky-300'>Rs 18.5 Tr</strong>, reflecting consolidation alongside expanded development spending." },
+            { icon: "➔", title: "Digital Expansion", body: "Continued AI-driven tax filing reform; broadened e-filing mandate to retailers and real-estate." },
+            { icon: "➔", title: "New Levies", body: "DUMMY — Revised petroleum levy ceiling and carbon fee introduced on high-emission industries." },
+            { icon: "➔", title: "Employee Relief", body: "DUMMY — Salaries increased by <strong class='text-green-400'>12%</strong>, pensions by <strong class='text-green-400'>9%</strong>." },
+            { icon: "➔", title: "PSDP Boost", body: "DUMMY — Development allocation raised by 25% compared to FY 2025-26 revised estimates." },
+        ];
+
+        // ─── 3. CHALLENGES ───────────────────────────────────────────────────────
+        const CHALLENGES = [
+            { title: "Debt Servicing", body: "Interest payments consume ~46% of federal budget, crowding out development." },
+            { title: "Tax Base Narrowness", body: "Only ~4 million active filers in a country of 230 million." },
+            { title: "Structural Deficit", body: "Persistent gap between revenue and expenditure requires chronic borrowing." },
+            { title: "Inflation Legacy", body: "Although declining, residual inflation continues to erode real wages." },
+            { title: "IMF Conditionalities", body: "Programme benchmarks constrain fiscal space for social spending." },
+            { title: "Pension Overhang", body: "Pension bill exceeds salary bill — actuarial reform overdue." },
+            { title: "Enforcement Gap", body: "Policy implementation remains weak, reducing effective tax collection." },
+        ];
+
+        // ─── 4. FOUR Ds OF EXPENDITURE (Auto-calculated from Sub-components) ─────
+        // UPDATE THESE RAW VALUES. The charts will automatically aggregate them.
+        const FOUR_D_COMPONENTS = {
+            debt: {
+                label: "Debt Interest", color: "#f87171",
+                fy2526: { "Interest Payments": 7300, "Pension": 907 },
+                fy2627: { "Interest Payments": 7400, "Pension": 1100 } // DUMMY
+            },
+            defence: {
+                label: "Defence", color: "#60a5fa",
+                fy2526: { "Defence Budget": 2550 },
+                fy2627: { "Defence Budget": 2800 } // DUMMY
+            },
+            dayToDay: {
+                label: "Day-to-Day Govt", color: "#818cf8",
+                fy2526: { "Current Expenditure": 526, "Grants": 1100, "Subsidies": 400 },
+                fy2627: { "Current Expenditure": 600, "Grants": 1000, "Subsidies": 500 } // DUMMY
+            },
+            development: {
+                label: "Development", color: "#4ade80",
+                fy2526: { "PSDP": 3114 },
+                fy2627: { "PSDP": 3900 } // DUMMY
+            }
+        };
+
+        // Helper to sum components
+        function sumComponents(obj) { return Object.values(obj).reduce((a, b) => a + b, 0); }
+
+        const FOUR_D_DATA = Object.keys(FOUR_D_COMPONENTS).map(key => {
+            const item = FOUR_D_COMPONENTS[key];
+            return {
+                id: key,
+                label: item.label, color: item.color,
+                fy2526: sumComponents(item.fy2526),
+                fy2627: sumComponents(item.fy2627)
+            };
+        });
+        const TOTAL_EXP_FY2627 = FOUR_D_DATA.reduce((s, d) => s + d.fy2627, 0);
+
+        // ─── 5. SECTOR ALLOCATIONS ───────────────────────────────────────────────
+        const SECTOR_DATA = [
+            { label: "Defence", color: "#60a5fa", fy2526: 2550, fy2627: 2800 },
+            { label: "Social Protection", color: "#4ade80", fy2526: 878, fy2627: 1000 },
+            { label: "Economic Affairs", color: "#fbbf24", fy2526: 1200, fy2627: 1350 },
+            { label: "Education", color: "#c084fc", fy2526: 1400, fy2627: 1600 },
+            { label: "Health", color: "#f87171", fy2526: 500, fy2627: 590 },
+        ];
+
+        // ─── 6. REVENUE FLOW (Flowchart data for BOTH years) ─────────────────────
+        const REVENUE_FLOW_FY2526 = {
+            total: { label: "Total Revenue", value: "19,500 Bn" },
+            taxTotal: { label: "Tax Revenue", value: "13,200 Bn", color: "#4ade80" },
+            nonTax: { label: "Non-Tax Revenue", value: "4,900 Bn", color: "#fbbf24" },
+            privatiz: { label: "Privatization", value: "80 Bn", color: "#818cf8" },
+            direct: { label: "Direct Tax", value: "6,500 Bn", color: "#22c55e", items: ["Income Tax", "Capital Value Tax"] },
+            indirect: { label: "Indirect Tax", value: "6,700 Bn", color: "#34d399", items: ["Sales Tax", "Custom Duties", "Federal Excise"] },
+            prop: { label: "Property Tax", value: "450 Bn", color: "#a3e635" },
+            civilAdm: { label: "Civil Admin", value: "250 Bn", color: "#86efac" },
+            levies: { label: "Levies", value: "620 Bn", color: "#6ee7b7" },
+        };
+
+        const REVENUE_FLOW_FY2627 = {
+            total: { label: "Total Revenue", value: "22,120 Bn" },
+            taxTotal: { label: "Tax Revenue", value: "14,900 Bn", color: "#4ade80" },
+            nonTax: { label: "Non-Tax Revenue", value: "5,500 Bn", color: "#fbbf24" },
+            privatiz: { label: "Privatization", value: "100 Bn", color: "#818cf8" },
+            direct: { label: "Direct Tax", value: "7,200 Bn", color: "#22c55e", items: ["Income Tax", "Capital Value Tax"] },
+            indirect: { label: "Indirect Tax", value: "7,700 Bn", color: "#34d399", items: ["Sales Tax", "Custom Duties", "Federal Excise"] },
+            prop: { label: "Property Tax", value: "500 Bn", color: "#a3e635" },
+            civilAdm: { label: "Civil Admin", value: "300 Bn", color: "#86efac" },
+            levies: { label: "Levies", value: "820 Bn", color: "#6ee7b7" },
+        };
+
+        // ─── 7. GENDER SLOPE CHART ───────────────────────────────────────────────
+        const SLOPE_DATA = [
+            { label: "Running of Civil Govt", prev: 9.8, curr: 9.2 },
+            { label: "Public Sector Dev", prev: 7.4, curr: 7.0 },
+        ];
+
+        // ─── 8. TAX SLABS ────────────────────────────────────────────────────────
+        const TAX_SLABS = [
+            { range: "0 – 0.6 Mn", old: "Zero Tax", neo: "Zero Tax", tag: "No Change", c: "slate" },
+            { range: "0.6 – 1.2 Mn", old: "5% Tax", neo: "1% Tax", tag: "Major Relief", c: "green" },
+            { range: "1.2 – 2.2 Mn", old: "30k+15%", neo: "6k+11%", tag: "Major Relief", c: "green" },
+            { range: "2.2 – 3.2 Mn", old: "180k+25%", neo: "346k+23%", tag: "Relief", c: "teal" },
+            { range: "3.2 – 4.1 Mn", old: "430k+30%", neo: "616k+30%", tag: "Relief", c: "teal" },
+            { range: "4.1 Mn+", old: "700k+35%", neo: "616k+35%", tag: "Minor Relief", c: "sky" },
+        ];
+
+        // ─── SANKEY LINKS (update after budget) ──────────────────────────────────
+        const SANKEY_LINKS = [
+            { from: 'node-tax-revenue', to: 'node-total-revenue', value: 14900, color: '#4ade80', stream: 'revenue' },
+            { from: 'node-property-tax', to: 'node-total-revenue', value: 500, color: '#a3e635', stream: 'revenue' },
+            { from: 'node-civil-admin', to: 'node-total-revenue', value: 300, color: '#86efac', stream: 'revenue' },
+            { from: 'node-levies', to: 'node-total-revenue', value: 820, color: '#6ee7b7', stream: 'revenue' },
+            { from: 'node-non-tax-revenue', to: 'node-total-revenue', value: 5500, color: '#4ade80', stream: 'revenue' },
+            { from: 'node-privatization', to: 'node-total-revenue', value: 100, color: '#fbbf24', stream: 'revenue' },
+            { from: 'node-domestic-borrow', to: 'node-total-borrowing', value: 6800, color: '#f87171', stream: 'borrowing' },
+            { from: 'node-foreign-borrow', to: 'node-total-borrowing', value: 200, color: '#f87171', stream: 'borrowing' },
+            { from: 'node-total-revenue', to: 'node-total-spend', value: 22120, color: '#2dd4bf', stream: 'revenue' },
+            { from: 'node-total-borrowing', to: 'node-total-spend', value: 7000, color: '#fb923c', stream: 'borrowing' },
+            { from: 'node-total-spend', to: 'node-provinces', value: 9000, color: '#a78bfa', stream: 'provinces' },
+            { from: 'node-total-spend', to: 'node-federal-budget', value: 18500, color: '#c084fc', stream: 'federal' },
+            { from: 'node-provinces', to: 'node-punjab', value: 4470, color: '#a78bfa', stream: 'provinces' },
+            { from: 'node-provinces', to: 'node-sindh', value: 2240, color: '#a78bfa', stream: 'provinces' },
+            { from: 'node-provinces', to: 'node-kpk', value: 1470, color: '#a78bfa', stream: 'provinces' },
+            { from: 'node-provinces', to: 'node-baluchistan', value: 820, color: '#a78bfa', stream: 'provinces' },
+            { from: 'node-federal-budget', to: 'node-current-spend', value: 16900, color: '#60a5fa', stream: 'federal-current' },
+            { from: 'node-federal-budget', to: 'node-dev-spend', value: 1600, color: '#34d399', stream: 'federal-dev' },
+            { from: 'node-current-spend', to: 'node-interest', value: 8500, color: '#ef4444', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-defense', value: 2800, color: '#60a5fa', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-pension', value: 1100, color: '#f97316', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-grants', value: 2000, color: '#eab308', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-subsidies', value: 1200, color: '#d946ef', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-running-gov', value: 1000, color: '#8b5cf6', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-emergencies', value: 300, color: '#f43f5e', stream: 'federal-current' },
+            { from: 'node-dev-spend', to: 'node-psdp', value: 1300, color: '#22c55e', stream: 'federal-dev' },
+            { from: 'node-dev-spend', to: 'node-lending', value: 300, color: '#10b981', stream: 'federal-dev' },
+        ];
+
+        /* ════════════════════════════════════════════════
+           END OF DATA SECTION — code below auto-renders
+           ════════════════════════════════════════════════ */
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // ── Scroll reveal ──────────────────────────────────────────────
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+            }, { threshold: 0.07 });
+            document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+            // ── Macro Table ────────────────────────────────────────────────
+            const tbody = document.getElementById('macro-tbody');
+            let hasAddedDeficitHeader = false;
+            MACRO_DATA.forEach(row => {
+                const dc = row.dir === 'up' ? 'delta-up' : row.dir === 'down' ? 'delta-down' : 'delta-neu';
+
+                if (row.isGroup && !hasAddedDeficitHeader) {
+                    tbody.innerHTML += `<tr><td colspan="5" class="pt-4 pb-2 text-xs text-slate-500 uppercase font-bold tracking-widest bg-slate-900/30 pl-4 border-l-2 border-red-500">Deficit Indicators</td></tr>`;
+                    hasAddedDeficitHeader = true;
+                }
+
+                const pl = row.isGroup ? 'pl-6 border-l-2 border-red-500/20' : '';
+                tbody.innerHTML += `<tr>
+            <td class="${pl}">${row.label}</td>
+            <td class="text-slate-400">${row.fy2425}</td>
+            <td class="text-slate-300">${row.fy2526}</td>
+            <td class="text-white font-bold">${row.fy2627}</td>
+            <td class="${dc} text-sm">${row.delta}</td>
+        </tr>`;
+            });
+
+            // ── Directives ────────────────────────────────────────────────
+            const dl = document.getElementById('directives-list');
+            DIRECTIVES.forEach(d => {
+                dl.innerHTML += `<li class="flex items-start gap-3"><span class="text-sky-400 mt-0.5">${d.icon}</span>
+            <span><strong class="text-white">${d.title}:</strong> ${d.body}</span></li>`;
+            });
+
+            // ── Challenges ───────────────────────────────────────────────
+            const cl = document.getElementById('challenges-list');
+            CHALLENGES.forEach(c => {
+                cl.innerHTML += `<li class="flex items-start gap-3"><span class="text-red-400 mt-0.5">⚠</span>
+            <span><strong class="text-white">${c.title}:</strong> ${c.body}</span></li>`;
+            });
+
+            // ── 4D KPI tiles (Ultra Premium Redesign) ──────────────────
+            const grid4d = document.getElementById('kpi-4d-grid');
+            // Match exactly with the bar chart: red, sky, indigo, green
+            const tileColors = ['#f87171', '#38bdf8', '#818cf8', '#4ade80'];
+            FOUR_D_DATA.forEach((d, i) => {
+                const color = tileColors[i];
+                grid4d.innerHTML += `<div class="kpi-card relative group p-6 bg-[#0f172a]/90 rounded-2xl border border-slate-700/60 flex flex-col justify-center items-center shadow-lg transition-all duration-300 hover:-translate-y-1" onmouseover="this.style.borderColor='${color}'; this.style.boxShadow='0 10px 30px -5px ${color}66'" onmouseout="this.style.borderColor=''; this.style.boxShadow=''">
+            <span class="text-[0.65rem] text-slate-400 uppercase tracking-[0.2em] font-bold mb-2 group-hover:text-slate-200 transition-colors">${d.label}</span>
+            <span class="text-4xl sm:text-5xl font-black tracking-tight" style="color: ${color}; text-shadow: 0 0 20px ${color}66;" data-count="${d.fy2627}">0 <span class="text-sm font-semibold text-slate-500 tracking-normal ml-1" style="text-shadow: none;">Bn</span></span>
+        </div>`;
+            });
+
+            // ── Counter animation ────────────────────────────────────────
+            function animateCounters(root) {
+                root.querySelectorAll('[data-count]').forEach(el => {
+                    const target = +el.dataset.count;
+                    const isMain = el.id === 'total-exp-counter';
+                    const duration = 1400;
+                    const start = performance.now();
+                    const frame = (now) => {
+                        const p = Math.min((now - start) / duration, 1);
+                        const ease = 1 - Math.pow(1 - p, 3);
+                        const val = Math.round(target * ease);
+                        if (isMain) el.textContent = val.toLocaleString();
+                        else el.innerHTML = `${val.toLocaleString()} <span class="text-sm font-semibold text-slate-500 tracking-normal ml-1" style="text-shadow: none;">Bn</span>`;
+                        if (p < 1) requestAnimationFrame(frame);
+                    };
+                    requestAnimationFrame(frame);
+                });
+            }
+
+            document.getElementById('total-exp-counter').dataset.count = TOTAL_EXP_FY2627;
+            const revealIo = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { animateCounters(e.target); revealIo.unobserve(e.target); } });
+            }, { threshold: 0.3 });
+            document.querySelectorAll('.kpi-card, #total-exp-counter').forEach(el => revealIo.observe(el));
+
+
+            // ── 4D Comparison Chart ───────────────────────────────────────
+            const ctx4d = document.getElementById('fourDChart').getContext('2d');
+            const gradPrev = ctx4d.createLinearGradient(0, 0, 0, 400);
+            gradPrev.addColorStop(0, 'rgba(66, 153, 225, 0.9)');
+            gradPrev.addColorStop(1, 'rgba(66, 153, 225, 0.2)');
+
+            const gradCurr = ctx4d.createLinearGradient(0, 0, 0, 400);
+            gradCurr.addColorStop(0, 'rgba(229, 62, 62, 0.95)');
+            gradCurr.addColorStop(1, 'rgba(229, 62, 62, 0.2)');
+
+            new Chart(document.getElementById('fourDChart'), {
+                type: 'bar',
+                plugins: [ChartDataLabels],
+                data: {
+                    labels: FOUR_D_DATA.map(d => d.label),
+                    datasets: [
+                        { label: 'FY 2025-26', data: FOUR_D_DATA.map(d => d.fy2526), backgroundColor: gradPrev, borderColor: '#60A5FA', borderWidth: 2, borderRadius: 6, hoverBackgroundColor: '#60A5FA' },
+                        { label: 'FY 2026-27 (Expected)', data: FOUR_D_DATA.map(d => d.fy2627), backgroundColor: gradCurr, borderColor: '#F87171', borderWidth: 2, borderRadius: 6, hoverBackgroundColor: '#F87171' },
+                    ]
+                },
+
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 11 } } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: { size: 10, weight: '700', family: "'Montserrat', sans-serif", letterSpacing: 0.5 },
+                            formatter: v => v.toLocaleString(),
+                            anchor: 'end', align: 'top', offset: 8,
+                            backgroundColor: context => context.datasetIndex === 0 ? 'rgba(56, 189, 248, 0.2)' : 'rgba(248, 113, 113, 0.2)',
+                            borderColor: context => context.datasetIndex === 0 ? 'rgba(56, 189, 248, 0.5)' : 'rgba(248, 113, 113, 0.5)',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            padding: { top: 3, bottom: 3, left: 6, right: 6 },
+                            textShadowBlur: 4, textShadowColor: 'rgba(0,0,0,0.8)'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const id = FOUR_D_DATA[context.dataIndex].id;
+                                    const yearKey = context.datasetIndex === 0 ? 'fy2526' : 'fy2627';
+                                    const comps = FOUR_D_COMPONENTS[id][yearKey];
+                                    let tt = [context.dataset.label + ': Rs ' + context.raw.toLocaleString() + ' Bn'];
+                                    tt.push('Breakdown:');
+                                    for (const [k, v] of Object.entries(comps)) {
+                                        tt.push(`  • ${k}: ${v.toLocaleString()} Bn`);
+                                    }
+                                    return tt;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.07)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => v.toLocaleString() } }
+                    }
+                }
+            });
+
+
+            // ── Sector Pie Charts (Ultra-Premium Redesign) ───────────────────
+            const sectorColors = SECTOR_DATA.map(d => d.color);
+
+            function buildNestedPie() {
+                const totalPrev = SECTOR_DATA.reduce((sum, d) => sum + d.fy2526, 0);
+                const totalCurr = SECTOR_DATA.reduce((sum, d) => sum + d.fy2627, 0);
+
+                // Update Center Text
+                document.getElementById('pie-center-total').innerText = 'Rs ' + totalCurr.toLocaleString() + ' Bn';
+
+                const ctx = document.getElementById('sectorNestedPie').getContext('2d');
+
+                // Function to create ultra-premium glossy gradients
+                function createGradient(colorStr) {
+                    const grad = ctx.createLinearGradient(0, 0, 0, 400);
+                    grad.addColorStop(0, colorStr);
+                    grad.addColorStop(1, colorStr + '44'); // fade out to transparency
+                    return grad;
+                }
+
+                const htmlLabelsPlugin = {
+                    id: 'htmlLabels',
+                    afterDraw(chart) {
+                        const overlay = document.getElementById('pie-labels-overlay');
+                        overlay.innerHTML = ''; // Clear old labels
+
+                        const meta = chart.getDatasetMeta(0); // Outer ring
+
+                        meta.data.forEach((arc, i) => {
+                            const value = chart.data.datasets[0].data[i];
+                            const pct = ((value / totalCurr) * 100).toFixed(1);
+                            if (pct < 3) return; // Skip tiny slices
+
+                            const label = chart.data.labels[i];
+                            const color = sectorColors[i];
+
+                            // Calculate position outside the arc
+                            const angle = (arc.startAngle + arc.endAngle) / 2;
+                            const r = arc.outerRadius + 30; // 30px outside the ring
+
+                            const centerX = chart.chartArea.left + chart.chartArea.width / 2;
+                            const centerY = chart.chartArea.top + chart.chartArea.height / 2;
+
+                            const x = centerX + Math.cos(angle) * r;
+                            const y = centerY + Math.sin(angle) * r;
+
+                            // Create beautiful HTML Label
+                            const div = document.createElement('div');
+                            div.className = 'absolute flex flex-col items-center justify-center backdrop-blur-md shadow-2xl';
+                            div.style.left = x + 'px';
+                            div.style.top = y + 'px';
+                            div.style.transform = 'translate(-50%, -50%)';
+                            div.style.background = 'rgba(8, 13, 26, 0.85)';
+                            div.style.border = `1px solid ${color}66`;
+                            div.style.borderRadius = '8px';
+                            div.style.padding = '6px 12px';
+                            div.style.minWidth = 'max-content';
+
+                            // Box shadow glow using the slice color
+                            div.style.boxShadow = `0 8px 20px -4px ${color}33`;
+
+                            div.innerHTML = `
+                                <div class="text-[0.65rem] font-bold uppercase tracking-widest mb-1" style="color: ${color}">${label}</div>
+                                <div class="text-sm font-extrabold text-white">Rs ${value} Bn <span class="text-xs font-semibold text-slate-400">(${pct}%)</span></div>
+                            `;
+
+                            overlay.appendChild(div);
+                        });
+                    }
+                };
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: SECTOR_DATA.map(d => d.label),
+                        datasets: [
+                            {
+                                // Outer Ring: FY 2026-27
+                                label: 'FY 2026-27',
+                                data: SECTOR_DATA.map(d => d.fy2627),
+                                backgroundColor: sectorColors.map(c => createGradient(c)),
+                                borderColor: '#080d1a',
+                                borderWidth: 4,
+                                hoverOffset: 12,
+                                weight: 2
+                            },
+                            {
+                                // Inner Ring: FY 2025-26
+                                label: 'FY 2025-26',
+                                data: SECTOR_DATA.map(d => d.fy2526),
+                                backgroundColor: sectorColors.map(c => c + '33'),
+                                borderColor: '#080d1a',
+                                borderWidth: 4,
+                                hoverOffset: 0,
+                                weight: 1.2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '45%',
+                        layout: { padding: 60 },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: 'rgba(8, 13, 26, 0.95)',
+                                titleFont: { family: 'Montserrat', size: 13 },
+                                bodyFont: { family: 'Montserrat', size: 12 },
+                                padding: 10,
+                                cornerRadius: 8,
+                                borderColor: 'rgba(56, 189, 248, 0.3)',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function (ctx) {
+                                        const year = ctx.datasetIndex === 0 ? 'FY 2026-27' : 'FY 2025-26';
+                                        return ` ${year}: Rs ${ctx.parsed.toLocaleString()} Bn`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [htmlLabelsPlugin]
+                });
+            }
+            buildNestedPie();
+
+            // Sector legend
+            const leg = document.getElementById('sector-legend');
+            SECTOR_DATA.forEach(d => {
+                const pct25 = ((d.fy2526 / SECTOR_DATA.reduce((s, x) => s + x.fy2526, 0)) * 100).toFixed(1);
+                const pct26 = ((d.fy2627 / SECTOR_DATA.reduce((s, x) => s + x.fy2627, 0)) * 100).toFixed(1);
+                leg.innerHTML += `<div class="flex items-center gap-3">
+            <div class="legend-dot" style="background:${d.color}"></div>
+            <div class="flex-1">
+                <div class="flex justify-between text-sm">
+                    <span class="font-semibold text-slate-200">${d.label}</span>
+                    <span class="text-slate-400 text-xs">${pct25}% → <span class="text-white font-semibold">${pct26}%</span></span>
+                </div>
+                <div class="flex gap-2 mt-1 text-xs text-slate-500">
+                    <span>FY25-26: <strong class="text-slate-300">Rs ${d.fy2526.toLocaleString()} Bn</strong></span>
+                    <span>·</span>
+                    <span>FY26-27: <strong style="color:${d.color}">Rs ${d.fy2627.toLocaleString()} Bn (D)</strong></span>
+                </div>
+            </div>
+        </div>`;
+            });
+
+            // ── Revenue Flow Chart (Sankey Style) ─────────────────────────
+            function renderRevenueFlow(containerId, data) {
+                const rf = document.getElementById(containerId);
+                const prefix = containerId; // e.g. revenue-flow-prev
+                rf.style.position = 'relative';
+
+                rf.innerHTML = `
+        <svg class="rev-flow-svg" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0;"></svg>
+        <div class="flex items-start gap-12 py-4 w-full relative z-10" id="${prefix}-flex">
+            
+            <!-- Tier 0: Total -->
+            <div class="flex flex-col justify-center h-[280px] shrink-0">
+                <div id="${prefix}-total" class="rev-node border-sky-500/50 bg-sky-900/20 px-5 py-3">
+                    <div class="text-xs text-sky-400 uppercase tracking-widest">Total Revenue</div>
+                    <div class="text-xl font-bold text-white font-['Montserrat']">${data.total.value}</div>
+                </div>
+            </div>
+
+            <!-- Tier 1: Main Splits -->
+            <div class="flex flex-col justify-center gap-6 shrink-0 h-[280px]">
+                <div id="${prefix}-taxTotal" class="rev-node" style="border-color:${data.taxTotal.color}44">
+                    <div class="text-[0.65rem] uppercase tracking-widest" style="color:${data.taxTotal.color}">${data.taxTotal.label}</div>
+                    <div class="text-sm font-bold text-white">${data.taxTotal.value}</div>
+                </div>
+                <div id="${prefix}-nonTax" class="rev-node" style="border-color:${data.nonTax.color}44">
+                    <div class="text-[0.65rem] uppercase tracking-widest" style="color:${data.nonTax.color}">${data.nonTax.label}</div>
+                    <div class="text-sm font-bold text-white">${data.nonTax.value}</div>
+                </div>
+                <div id="${prefix}-privatiz" class="rev-node" style="border-color:${data.privatiz.color}44">
+                    <div class="text-[0.65rem] uppercase tracking-widest" style="color:${data.privatiz.color}">${data.privatiz.label}</div>
+                    <div class="text-sm font-bold text-white">${data.privatiz.value}</div>
+                </div>
+            </div>
+
+            <!-- Tier 2: Sub Splits -->
+            <div class="flex flex-col justify-center gap-3 shrink-0 h-[280px]">
+                <div id="${prefix}-direct" class="rev-node !py-1 !px-2" style="border-color:${data.direct.color}44">
+                    <div class="text-[0.6rem] uppercase tracking-widest" style="color:${data.direct.color}">${data.direct.label}</div>
+                    <div class="text-sm font-bold text-white">${data.direct.value}</div>
+                </div>
+                <div id="${prefix}-indirect" class="rev-node !py-1 !px-2" style="border-color:${data.indirect.color}44">
+                    <div class="text-[0.6rem] uppercase tracking-widest" style="color:${data.indirect.color}">${data.indirect.label}</div>
+                    <div class="text-sm font-bold text-white">${data.indirect.value}</div>
+                </div>
+                <div id="${prefix}-prop" class="rev-node !py-1 !px-2" style="border-color:${data.prop.color}44">
+                    <div class="text-[0.6rem] uppercase tracking-widest" style="color:${data.prop.color}">${data.prop.label}</div>
+                    <div class="text-sm font-bold text-white">${data.prop.value}</div>
+                </div>
+                <div id="${prefix}-civilAdm" class="rev-node !py-1 !px-2" style="border-color:${data.civilAdm.color}44">
+                    <div class="text-[0.6rem] uppercase tracking-widest" style="color:${data.civilAdm.color}">${data.civilAdm.label}</div>
+                    <div class="text-sm font-bold text-white">${data.civilAdm.value}</div>
+                </div>
+                <div id="${prefix}-levies" class="rev-node !py-1 !px-2" style="border-color:${data.levies.color}44">
+                    <div class="text-[0.6rem] uppercase tracking-widest" style="color:${data.levies.color}">${data.levies.label}</div>
+                    <div class="text-sm font-bold text-white">${data.levies.value}</div>
+                </div>
+            </div>
+        </div>`;
+            }
+
+            renderRevenueFlow('revenue-flow-prev', REVENUE_FLOW_FY2526);
+            renderRevenueFlow('revenue-flow-curr', REVENUE_FLOW_FY2627);
+
+            // Function to draw beautiful curved paths between revenue nodes
+            function drawRevenueSankey(containerId, data) {
+                const container = document.getElementById(containerId);
+                const svg = container.querySelector('.rev-flow-svg');
+                const flex = container.querySelector('div');
+                const containerRect = container.getBoundingClientRect();
+
+                // Set SVG size
+                svg.style.width = flex.scrollWidth + 'px';
+                svg.style.height = flex.scrollHeight + 'px';
+                svg.innerHTML = ''; // clear
+
+                const drawCurve = (fromId, toId, color, width) => {
+                    const elFrom = document.getElementById(`${containerId}-${fromId}`);
+                    const elTo = document.getElementById(`${containerId}-${toId}`);
+                    if (!elFrom || !elTo) return;
+
+                    const rFrom = elFrom.getBoundingClientRect();
+                    const rTo = elTo.getBoundingClientRect();
+
+                    const startX = rFrom.right - containerRect.left;
+                    const startY = rFrom.top + (rFrom.height / 2) - containerRect.top;
+                    const endX = rTo.left - containerRect.left;
+                    const endY = rTo.top + (rTo.height / 2) - containerRect.top;
+
+                    // Calculate bezier control points for smooth Sankey curve
+                    const controlPointX = startX + (endX - startX) * 0.5;
+                    const d = `M ${startX} ${startY} C ${controlPointX} ${startY}, ${controlPointX} ${endY}, ${endX} ${endY}`;
+
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", d);
+                    path.setAttribute("fill", "none");
+                    path.setAttribute("stroke", color);
+                    path.setAttribute("stroke-width", width);
+                    path.setAttribute("stroke-linecap", "round");
+                    path.setAttribute("opacity", "0.4");
+
+                    // Add subtle drawing animation on load
+                    path.style.strokeDasharray = "1000";
+                    path.style.strokeDashoffset = "1000";
+                    path.style.animation = "drawLine 2s ease-out forwards";
+
+                    svg.appendChild(path);
+                };
+
+                // Tier 1 connections
+                drawCurve('total', 'taxTotal', data.taxTotal.color, 8);
+                drawCurve('total', 'nonTax', data.nonTax.color, 4);
+                drawCurve('total', 'privatiz', data.privatiz.color, 2);
+
+                // Tier 2 connections (from taxTotal)
+                drawCurve('taxTotal', 'direct', data.direct.color, 4);
+                drawCurve('taxTotal', 'indirect', data.indirect.color, 4);
+                drawCurve('taxTotal', 'prop', data.prop.color, 2);
+                drawCurve('taxTotal', 'civilAdm', data.civilAdm.color, 2);
+                drawCurve('taxTotal', 'levies', data.levies.color, 2);
+            }
+
+            // Draw after layout settles
+            setTimeout(() => {
+                drawRevenueSankey('revenue-flow-prev', REVENUE_FLOW_FY2526);
+                drawRevenueSankey('revenue-flow-curr', REVENUE_FLOW_FY2627);
+            }, 100);
+
+            // Redraw on window resize
+            window.addEventListener('resize', () => {
+                drawRevenueSankey('revenue-flow-prev', REVENUE_FLOW_FY2526);
+                drawRevenueSankey('revenue-flow-curr', REVENUE_FLOW_FY2627);
+            });
+
+            // ── Sankey Draw ───────────────────────────────────────────────
+            function drawSankeyPaths() {
+                const svg = document.querySelector('#budget-flow-sankey #sankey-paths-svg');
+                const container = document.getElementById('sankey-chart-area');
+                if (!svg || !container) return;
+                svg.innerHTML = '';
+                const cRect = container.getBoundingClientRect();
+                const totalVal = SANKEY_LINKS.reduce((s, l) => { return l.from === 'node-total-spend' ? s : (l.to === 'node-total-spend' ? s + l.value : s); }, 0) || 29120;
+                const maxStroke = 55;
+
+                SANKEY_LINKS.forEach(link => {
+                    const fromEl = document.getElementById(link.from);
+                    const toEl = document.getElementById(link.to);
+                    if (!fromEl || !toEl) return;
+                    const fR = fromEl.getBoundingClientRect();
+                    const tR = toEl.getBoundingClientRect();
+                    const sx = fR.right - cRect.left, sy = fR.top - cRect.top + fR.height / 2;
+                    const ex = tR.left - cRect.left, ey = tR.top - cRect.top + tR.height / 2;
+                    const cx = sx + (ex - sx) / 2;
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', `M ${sx} ${sy} C ${cx} ${sy}, ${cx} ${ey}, ${ex} ${ey}`);
+                    path.setAttribute('stroke', link.color);
+                    path.setAttribute('stroke-width', Math.max(2, (link.value / totalVal) * maxStroke));
+                    path.setAttribute('stroke-opacity', '0.55');
+                    path.setAttribute('fill', 'none');
+                    path.classList.add('sankey-path');
+                    path.dataset.stream = link.stream;
+                    svg.appendChild(path);
+                });
+            }
+
+            function setupSankeyInteractivity() {
+                const container = document.getElementById('sankey-chart-area');
+                if (!container) return;
+                const nodes = container.querySelectorAll('.sankey-node');
+                const paths = container.querySelectorAll('.sankey-path');
+                const highlight = stream => {
+                    container.classList.add('is-highlighted');
+                    nodes.forEach(n => n.classList.toggle('is-active', n.dataset.stream === stream || n.dataset.stream === 'spend'));
+                    paths.forEach(p => p.classList.toggle('is-active', p.dataset.stream === stream));
+                };
+                const clear = () => {
+                    container.classList.remove('is-highlighted');
+                    nodes.forEach(n => n.classList.remove('is-active'));
+                    paths.forEach(p => p.classList.remove('is-active'));
+                };
+                nodes.forEach(n => { n.addEventListener('mouseenter', () => highlight(n.dataset.stream)); n.addEventListener('mouseleave', clear); });
+            }
+
+            drawSankeyPaths();
+            setupSankeyInteractivity();
+            new ResizeObserver(drawSankeyPaths).observe(document.getElementById('sankey-chart-area'));
+
+            // ── Slope Chart ───────────────────────────────────────────────
+            const shost = document.getElementById('slope-chart-host');
+            const labelsHtml = SLOPE_DATA.map(d => `<div class="text-sm font-semibold text-slate-300 whitespace-nowrap">${d.label}</div>`).join('<div class="h-16"></div>');
+            const rowsHtml = SLOPE_DATA.map(d => {
+                const isUp = d.curr > d.prev;
+                const fillColor = isUp ? '#4ade80' : '#f87171';
+                return `<div class="slope-row" style="height:110px">
+            <div class="slope-line" style="background:${fillColor}44"></div>
+            <div class="data-dot dot-start" style="background:var(--fy-prev)"><div class="slope-label" style="color:var(--fy-prev)">${d.prev}%</div></div>
+            <div class="data-dot dot-end"   style="background:var(--fy-curr)"><div class="slope-label" style="color:var(--fy-curr)">${d.curr}%</div></div>
+        </div>`;
+            }).join('');
+            const deltaHtml = SLOPE_DATA.map(d => {
+                const diff = (d.curr - d.prev).toFixed(1);
+                const c = +diff > 0 ? 'text-green-400' : 'text-red-400';
+                const arrow = +diff > 0 ? '↑' : '↓';
+                return `<div class="text-sm font-bold ${c} whitespace-nowrap">${arrow} ${Math.abs(+diff)}pp</div>`;
+            }).join('<div class="h-16"></div>');
+            shost.innerHTML = `
+        <div class="flex flex-col gap-14 justify-start pt-8">${labelsHtml}</div>
+        <div>
+            <div class="flex justify-between text-xs text-slate-500 px-[18%] mb-2">
+                <span style="color:var(--fy-prev)">■ FY 2025-26</span>
+                <span style="color:var(--fy-curr)">■ FY 2026-27</span>
+            </div>
+            ${rowsHtml}
+        </div>
+        <div class="flex flex-col gap-14 justify-start pt-8">${deltaHtml}</div>`;
+
+            // ── Tax Slabs ────────────────────────────────────────────────
+            const sc = document.getElementById('tax-slab-container');
+            const tagColors = { green: 'bg-green-500/20 text-green-300', teal: 'bg-teal-500/20 text-teal-300', sky: 'bg-sky-500/20 text-sky-300', slate: 'bg-slate-500/20 text-slate-400' };
+            TAX_SLABS.forEach(s => {
+                sc.innerHTML += `<div class="kpi-card">
+            <p class="text-sm font-bold text-white mb-2">${s.range}</p>
+            <div class="text-left mb-3">
+                <p class="text-xs text-slate-400">Old: <span class="text-slate-200 font-medium">${s.old}</span></p>
+                <p class="text-xs text-slate-400">New: <span class="text-slate-200 font-medium">${s.neo}</span></p>
+            </div>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${tagColors[s.c]}">${s.tag}</span>
+        </div>`;
+            });
+
+        }); // DOMContentLoaded
+    </script>
+</body>
+
+</html>
