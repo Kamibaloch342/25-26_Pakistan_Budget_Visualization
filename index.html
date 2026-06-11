@@ -40,6 +40,10 @@
         body {
             font-family: 'Montserrat', sans-serif;
             background-color: var(--bg);
+            background-image: linear-gradient(rgba(8, 13, 26, 0.7), rgba(8, 13, 26, 0.7)), url('background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             color: #e2e8f0;
             overflow-x: hidden;
         }
@@ -633,30 +637,11 @@
     <div class="sticky top-0 md:top-2 z-50 max-w-7xl mx-auto rounded-b-2xl md:rounded-2xl backdrop-blur-xl bg-[#080d1a]/85 border border-t-0 md:border-t border-slate-700/50 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.7)] transition-all duration-300 py-3 sm:py-4 mb-8"
         style="backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
         <div class="px-4 sm:px-6 md:px-8 flex items-center justify-center sm:justify-start gap-4 sm:gap-6">
-            <!-- SDPI Hexagon Logo SVG -->
-            <div class="flex-shrink-0 drop-shadow-[0_0_15px_rgba(129,140,248,0.2)]">
-                <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="50,2 95,28 95,72 50,98 5,72 5,28" stroke="#cbd5e1" stroke-width="2" fill="#1e1b4b"
-                        stroke-linejoin="round" />
-                    <polygon points="50,6 91,30 91,70 50,94 9,70 9,30" stroke="#818cf8" stroke-width="1.5"
-                        fill="transparent" stroke-linejoin="round" />
-                    <path d="M50,15 L50,45 M35,30 L50,45 M65,30 L50,45" stroke="#ffffff" stroke-width="5"
-                        stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M20,65 L45,50 M25,45 L45,50 M35,75 L45,50" stroke="#ffffff" stroke-width="5"
-                        stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M80,65 L55,50 M75,45 L55,50 M65,75 L55,50" stroke="#ffffff" stroke-width="5"
-                        stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
+            <!-- SDPI Logo Image (Hardcoded Base64) -->
+            <div class="flex-shrink-0 flex items-center justify-center border-r border-slate-700/60 pr-4 sm:pr-6 mr-2">
+                <img src="sdpi-logo.png" alt="SDPI Logo" class="h-12 sm:h-16 w-auto object-contain drop-shadow-md bg-white/90 p-1.5 rounded-lg">
             </div>
-
-            <!-- SDPI Text Logo -->
-            <div class="hidden md:flex flex-col justify-center border-r border-slate-700/60 pr-6 mr-2">
-                <span class="text-[2.5rem] font-extrabold tracking-tight text-slate-300 leading-none"
-                    style="font-family: Arial, sans-serif;">SDPI</span>
-                <span class="text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Sustainable Development
-                    Policy Institute</span>
-            </div>
-
+            
             <!-- Main Title Area -->
             <div class="flex flex-col text-left">
                 <span class="text-[0.6rem] text-sky-400 font-bold uppercase tracking-[0.2em] mb-0.5 md:hidden">SDPI
