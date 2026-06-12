@@ -730,33 +730,7 @@
             </div>
         </div>
 
-        <!-- ═══════════════════ SECTION 5 · REVENUE FLOW ══════════════════════ -->
-        <div class="card mt-8 reveal delay-200">
-            <div class="sec-title">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                </svg>
-                Total Revenue Flow Comparison
-                <span class="badge">FY 2025-26 vs FY 2026-27</span>
-                <span class="ml-auto text-xs text-slate-500 font-normal italic">
-                    figures</span>
-            </div>
-            <div class="flex flex-col xl:flex-row gap-8 overflow-x-auto pb-4">
-                <div class="flex-1 min-w-[500px]">
-                    <p class="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-2">FY 2025-26</p>
-                    <div id="revenue-flow-prev"></div>
-                </div>
-                <div class="w-px bg-slate-700/50 hidden xl:block"></div>
-                <div class="h-px bg-slate-700/50 xl:hidden w-full"></div>
-                <div class="flex-1 min-w-[500px]">
-                    <p class="text-sm text-slate-400 uppercase tracking-widest font-semibold mb-2">FY 2026-27 (Expected)
-                    </p>
-                    <div id="revenue-flow-curr"></div>
-                </div>
-            </div>
-        </div>
+
 
         <!-- ═══════════════════ SECTION 6 · MAIN SANKEY ═══════════════════════ -->
         <div class="card mt-8 reveal delay-0" id="budget-flow-sankey">
@@ -768,7 +742,8 @@
                 </svg>
                 Pakistan Budget 2026-27: Flow of Funds
                 <span class="badge">Hover to highlight streams</span>
-                <span class="ml-auto text-xs text-slate-500 font-normal italic">Figures in Rs. Billion — FY 2026-27 Actuals</span>
+                <span class="ml-auto text-xs text-slate-500 font-normal italic">Figures in Rs. Billion — FY 2026-27
+                    Actuals</span>
             </div>
             <div id="sankey-chart-area">
                 <svg id="sankey-paths-svg"></svg>
@@ -811,8 +786,8 @@
                 <div class="sankey-column" style="grid-column:4">
                     <div class="sankey-node" id="node-provinces" data-value="9000" data-stream="provinces"><span
                             class="node-title">To Provinces (NFC)</span><span class="node-value">9,000</span></div>
-                    <div class="sankey-node" id="node-federal-budget" data-value="18711" data-stream="federal"><span
-                            class="node-title">Federal Budget</span><span class="node-value">18,711</span></div>
+                    <div class="sankey-node" id="node-federal-budget" data-value="18771" data-stream="federal"><span
+                            class="node-title">Federal Budget</span><span class="node-value">18,771</span></div>
                 </div>
 
                 <!-- Col 5: Province breakdown + Current/Dev -->
@@ -876,8 +851,7 @@
             <div class="sec-title">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
                 FBR Revenue Growth Trajectory
                 <span class="badge">3-Year Trend</span>
@@ -888,10 +862,15 @@
                     <div class="mt-6 p-4 rounded-xl border border-slate-700/50 bg-slate-900/30">
                         <p class="text-xs text-slate-400 uppercase tracking-widest mb-2">Key Highlights</p>
                         <ul class="space-y-2 text-sm text-slate-300">
-                            <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">▲</span> GDP-to-Tax ratio grew from <strong class="text-white">8.5%</strong> (2022-23) to <strong class="text-white">10.3%</strong></li>
-                            <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">▲</span> FBR Revenue Growth <strong class="text-white">17.6% YoY</strong></li>
-                            <li class="flex items-start gap-2"><span class="text-sky-400 mt-0.5">→</span> Provincial share (NFC): <strong class="text-white">Rs 8,848 Billion</strong></li>
-                            <li class="flex items-start gap-2"><span class="text-sky-400 mt-0.5">→</span> Federal Net Revenue: <strong class="text-white">Rs 11,751 Billion</strong></li>
+                            <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">▲</span> GDP-to-Tax
+                                ratio grew from <strong class="text-white">8.5%</strong> (2022-23) to <strong
+                                    class="text-white">10.3%</strong></li>
+                            <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">▲</span> FBR Revenue
+                                Growth <strong class="text-white">17.6% YoY</strong></li>
+                            <li class="flex items-start gap-2"><span class="text-sky-400 mt-0.5">→</span> Provincial
+                                share (NFC): <strong class="text-white">Rs 8,848 Billion</strong></li>
+                            <li class="flex items-start gap-2"><span class="text-sky-400 mt-0.5">→</span> Federal Net
+                                Revenue: <strong class="text-white">Rs 11,751 Billion</strong></li>
                         </ul>
                     </div>
                 </div>
@@ -915,8 +894,10 @@
                 <div>
                     <div class="grid grid-cols-2 gap-4" id="psdp-kpi-grid"></div>
                     <div class="mt-4 p-4 rounded-xl border border-emerald-500/20 bg-emerald-900/10">
-                        <p class="text-xs text-emerald-400 uppercase tracking-widest mb-1 font-bold">New PSDP Projects</p>
-                        <p class="text-2xl font-extrabold text-white">18 <span class="text-sm text-slate-400 font-normal">new projects worth</span> Rs 451 Bn</p>
+                        <p class="text-xs text-emerald-400 uppercase tracking-widest mb-1 font-bold">New PSDP Projects
+                        </p>
+                        <p class="text-2xl font-extrabold text-white">18 <span
+                                class="text-sm text-slate-400 font-normal">new projects worth</span> Rs 451 Bn</p>
                     </div>
                 </div>
             </div>
@@ -927,8 +908,7 @@
             <div class="sec-title">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
                 Sectoral PSDP Allocations
                 <span class="badge">Horizontal Bar Chart</span>
@@ -953,8 +933,8 @@
             <!-- External Accounts -->
             <div class="card reveal delay-100">
                 <div class="sec-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-400" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-400" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -1031,7 +1011,7 @@
             { label: "Agri Growth Rate", fy2425: "6.4%", fy2526: "1.5%", fy2627: "2.9%", delta: "+1.4pp", dir: "up", isGroup: false },
             { label: "Manufacturing Growth Rate", fy2425: "3.0%", fy2526: "2.0%", fy2627: "6.6%", delta: "+4.6pp", dir: "up", isGroup: false },
             { label: "Service Sector Growth Rate", fy2425: "2.3%", fy2526: "3.1%", fy2627: "4.1%", delta: "+1.0pp", dir: "up", isGroup: false },
-            { label: "CPI", fy2425: "23.4%", fy2526: "4.5%", fy2627: "6.2%", delta: "+1.7pp", dir: "down", isGroup: false },
+            { label: "CPI", fy2425: "23.4%", fy2526: "4.5%", fy2627: "8.2%", delta: "+3.7pp", dir: "up", isGroup: false },
             { label: "Unemployment Rate", fy2425: "-", fy2526: "7.1%", fy2627: "-", delta: "—", dir: "neu", isGroup: false },
 
             // Deficits & Fiscal
@@ -1051,7 +1031,7 @@
 
         // ─── 2. KEY DIRECTIVES ───────────────────────────────────────────────────
         const DIRECTIVES = [
-            { icon: "➤", title: "Total Outlay", body: "Set at <strong class='text-sky-300'>Rs 18,711 Billion</strong>, reflecting consolidation alongside expanded development spending." },
+            { icon: "➤", title: "Total Outlay", body: "Set at <strong class='text-sky-300'>Rs 18,771 Billion</strong>, reflecting consolidation alongside expanded development spending." },
             { icon: "➤", title: "Total Revenue", body: "Expected at <strong class='text-sky-300'>Rs 24,612 Billion</strong> — Tax Revenue Rs 15,264 Bn, Non-Tax Rs 5,336 Bn, Privatization Rs 4,012 Bn." },
             { icon: "➔", title: "Employee Relief", body: "Salaries & Pensions increased by <strong class='text-green-400'>7%</strong>." },
             { icon: "➤", title: "PSDP", body: "Federal PSDP allocation set at <strong class='text-red-400'>Rs 1,000 Billion</strong>. Net Lending at Rs 276 Billion." },
@@ -1165,7 +1145,7 @@
             { from: 'node-total-revenue', to: 'node-total-spend', value: 24612, color: '#2dd4bf', stream: 'revenue' },
             { from: 'node-total-borrowing', to: 'node-total-spend', value: 7000, color: '#fb923c', stream: 'borrowing' },
             { from: 'node-total-spend', to: 'node-provinces', value: 9000, color: '#a78bfa', stream: 'provinces' },
-            { from: 'node-total-spend', to: 'node-federal-budget', value: 18711, color: '#c084fc', stream: 'federal' },
+            { from: 'node-total-spend', to: 'node-federal-budget', value: 18771, color: '#c084fc', stream: 'federal' },
             { from: 'node-provinces', to: 'node-punjab', value: 4470, color: '#a78bfa', stream: 'provinces' },
             { from: 'node-provinces', to: 'node-sindh', value: 2240, color: '#a78bfa', stream: 'provinces' },
             { from: 'node-provinces', to: 'node-kpk', value: 1470, color: '#a78bfa', stream: 'provinces' },
@@ -1479,6 +1459,7 @@
             // ── Revenue Flow Chart (Sankey Style) ─────────────────────────
             function renderRevenueFlow(containerId, data) {
                 const rf = document.getElementById(containerId);
+                if (!rf) return;
                 const prefix = containerId; // e.g. revenue-flow-prev
                 rf.style.position = 'relative';
 
@@ -1542,6 +1523,7 @@
             // Function to draw beautiful curved paths between revenue nodes
             function drawRevenueSankey(containerId, data) {
                 const container = document.getElementById(containerId);
+                if (!container) return;
                 const svg = container.querySelector('.rev-flow-svg');
                 const flex = container.querySelector('div');
                 const containerRect = container.getBoundingClientRect();
