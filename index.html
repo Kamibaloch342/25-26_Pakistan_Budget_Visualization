@@ -40,7 +40,7 @@
         body {
             font-family: 'Montserrat', sans-serif;
             background-color: var(--bg);
-            background-image: linear-gradient(rgba(8, 13, 26, 0.7), rgba(8, 13, 26, 0.7)), url('background.jpg');
+            background-image: linear-gradient(rgba(8, 13, 26, 0.9), rgba(8, 13, 26, 0.9)), url('background.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -386,68 +386,7 @@
             grid-row: 8 / span 2;
         }
 
-        /* ─── slope chart ─── */
-        .slope-row {
-            position: relative;
-            height: 110px;
-        }
 
-        .slope-line {
-            position: absolute;
-            height: 2px;
-            background: var(--border);
-            top: 50%;
-            left: 18%;
-            width: 64%;
-            transform-origin: left center;
-            animation: drawLine 1.4s 0.4s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
-            transform: scaleX(0);
-        }
-
-        @keyframes drawLine {
-            to {
-                transform: scaleX(1);
-            }
-        }
-
-        .data-dot {
-            position: absolute;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            border: 2px solid #fff;
-            z-index: 2;
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        .dot-start {
-            animation-delay: 1.6s;
-            left: 18%;
-        }
-
-        .dot-end {
-            animation-delay: 1.8s;
-            left: 82%;
-        }
-
-        @keyframes popIn {
-            to {
-                transform: translate(-50%, -50%) scale(1);
-            }
-        }
-
-        .slope-label {
-            position: absolute;
-            transform: translateX(-50%);
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1rem;
-            font-weight: 700;
-            top: -32px;
-            opacity: 0;
-            animation: fadeIn 0.4s 2.1s ease forwards;
-        }
 
         @keyframes fadeIn {
             to {
@@ -639,9 +578,10 @@
         <div class="px-4 sm:px-6 md:px-8 flex items-center justify-center sm:justify-start gap-4 sm:gap-6">
             <!-- SDPI Logo Image (Hardcoded Base64) -->
             <div class="flex-shrink-0 flex items-center justify-center border-r border-slate-700/60 pr-4 sm:pr-6 mr-2">
-                <img src="sdpi-logo.png" alt="SDPI Logo" class="h-12 sm:h-16 w-auto object-contain drop-shadow-md bg-white/90 p-1.5 rounded-lg">
+                <img src="sdpi-logo.png" alt="SDPI Logo"
+                    class="h-12 sm:h-16 w-auto object-contain drop-shadow-md bg-white/90 p-1.5 rounded-lg">
             </div>
-            
+
             <!-- Main Title Area -->
             <div class="flex flex-col text-left">
                 <span class="text-[0.6rem] text-sky-400 font-bold uppercase tracking-[0.2em] mb-0.5 md:hidden">SDPI
@@ -674,7 +614,7 @@
                 </svg>
                 Macro Snapshot
                 <span class="badge">Tabulated Comparison</span>
-                <span class="ml-auto text-xs text-slate-500 font-normal italic">* Dummy values — replace after budget
+                <span class="ml-auto text-xs text-slate-500 font-normal italic">
                     announcement</span>
             </div>
             <div class="overflow-x-auto">
@@ -746,7 +686,7 @@
                         </p>
                         <p class="text-5xl font-extrabold text-white mt-1 animate-float" id="total-exp-counter"
                             class="animate-pulse" data-count="0">—</p>
-                        <p class="text-sm font-medium text-slate-500">Billion PKR (Dummy — update post-budget)</p>
+                        <p class="text-sm font-medium text-slate-500">Billion PKR</p>
                     </div>
                 </div>
                 <!-- Comparison chart -->
@@ -800,7 +740,7 @@
                 </svg>
                 Total Revenue Flow Comparison
                 <span class="badge">FY 2025-26 vs FY 2026-27</span>
-                <span class="ml-auto text-xs text-slate-500 font-normal italic">* Dummy — replace with announced
+                <span class="ml-auto text-xs text-slate-500 font-normal italic">
                     figures</span>
             </div>
             <div class="flex flex-col xl:flex-row gap-8 overflow-x-auto pb-4">
@@ -828,26 +768,25 @@
                 </svg>
                 Pakistan Budget 2026-27: Flow of Funds
                 <span class="badge">Hover to highlight streams</span>
-                <span class="ml-auto text-xs text-slate-500 font-normal italic">Figures in Rs. Billion — dummies until
-                    budget</span>
+                <span class="ml-auto text-xs text-slate-500 font-normal italic">Figures in Rs. Billion — FY 2026-27 Actuals</span>
             </div>
             <div id="sankey-chart-area">
                 <svg id="sankey-paths-svg"></svg>
 
                 <!-- Col 1: Revenue sources -->
                 <div class="sankey-column" style="grid-column:1">
-                    <div class="sankey-node" id="node-tax-revenue" data-value="14900" data-stream="revenue"><span
-                            class="node-title">Tax Revenue</span><span class="node-value">14,900</span></div>
+                    <div class="sankey-node" id="node-tax-revenue" data-value="15264" data-stream="revenue"><span
+                            class="node-title">Tax Revenue</span><span class="node-value">15,264</span></div>
                     <div class="sankey-node" id="node-property-tax" data-value="500" data-stream="revenue"><span
                             class="node-title">Property Tax</span><span class="node-value">500</span></div>
                     <div class="sankey-node" id="node-civil-admin" data-value="300" data-stream="revenue"><span
                             class="node-title">Civil Admin</span><span class="node-value">300</span></div>
                     <div class="sankey-node" id="node-levies" data-value="820" data-stream="revenue"><span
                             class="node-title">Levies</span><span class="node-value">820</span></div>
-                    <div class="sankey-node" id="node-non-tax-revenue" data-value="5500" data-stream="revenue"><span
-                            class="node-title">Non-Tax Revenue</span><span class="node-value">5,500</span></div>
-                    <div class="sankey-node" id="node-privatization" data-value="100" data-stream="revenue"><span
-                            class="node-title">Privatization</span><span class="node-value">100</span></div>
+                    <div class="sankey-node" id="node-non-tax-revenue" data-value="5336" data-stream="revenue"><span
+                            class="node-title">Non-Tax Revenue</span><span class="node-value">5,336</span></div>
+                    <div class="sankey-node" id="node-privatization" data-value="4012" data-stream="revenue"><span
+                            class="node-title">Privatization</span><span class="node-value">4,012</span></div>
                     <div class="sankey-node" id="node-domestic-borrow" data-value="6800" data-stream="borrowing"><span
                             class="node-title">Domestic Borrowing</span><span class="node-value">6,800</span></div>
                     <div class="sankey-node" id="node-foreign-borrow" data-value="200" data-stream="borrowing"><span
@@ -856,24 +795,24 @@
 
                 <!-- Col 2: Aggregates -->
                 <div class="sankey-column" style="grid-column:2">
-                    <div class="sankey-node" id="node-total-revenue" data-value="22120" data-stream="revenue"><span
-                            class="node-title">Total Revenue</span><span class="node-value">22,120</span></div>
+                    <div class="sankey-node" id="node-total-revenue" data-value="24612" data-stream="revenue"><span
+                            class="node-title">Total Revenue</span><span class="node-value">24,612</span></div>
                     <div class="sankey-node" id="node-total-borrowing" data-value="7000" data-stream="borrowing"><span
                             class="node-title">Total Borrowing</span><span class="node-value">7,000</span></div>
                 </div>
 
                 <!-- Col 3: Total spend -->
                 <div class="sankey-column" style="grid-column:3">
-                    <div class="sankey-node" id="node-total-spend" data-value="29120" data-stream="spend"><span
-                            class="node-title">Total Spend</span><span class="node-value">29,120</span></div>
+                    <div class="sankey-node" id="node-total-spend" data-value="31612" data-stream="spend"><span
+                            class="node-title">Total Spend</span><span class="node-value">31,612</span></div>
                 </div>
 
                 <!-- Col 4: Province vs Federal split -->
                 <div class="sankey-column" style="grid-column:4">
                     <div class="sankey-node" id="node-provinces" data-value="9000" data-stream="provinces"><span
                             class="node-title">To Provinces (NFC)</span><span class="node-value">9,000</span></div>
-                    <div class="sankey-node" id="node-federal-budget" data-value="18500" data-stream="federal"><span
-                            class="node-title">Federal Budget</span><span class="node-value">18,500</span></div>
+                    <div class="sankey-node" id="node-federal-budget" data-value="18711" data-stream="federal"><span
+                            class="node-title">Federal Budget</span><span class="node-value">18,711</span></div>
                 </div>
 
                 <!-- Col 5: Province breakdown + Current/Dev -->
@@ -886,51 +825,35 @@
                             class="node-title">KP</span><span class="node-value">1,470</span></div>
                     <div class="sankey-node" id="node-baluchistan" data-value="820" data-stream="provinces"><span
                             class="node-title">Balochistan</span><span class="node-value">820</span></div>
-                    <div class="sankey-node" id="node-current-spend" data-value="16900" data-stream="federal-current">
-                        <span class="node-title">Current Expenditure</span><span class="node-value">16,900</span>
+                    <div class="sankey-node" id="node-current-spend" data-value="17495" data-stream="federal-current">
+                        <span class="node-title">Current Expenditure</span><span class="node-value">17,495</span>
                     </div>
-                    <div class="sankey-node" id="node-dev-spend" data-value="1600" data-stream="federal-dev"><span
-                            class="node-title">Development (PSDP)</span><span class="node-value">1,600</span></div>
+                    <div class="sankey-node" id="node-dev-spend" data-value="1276" data-stream="federal-dev"><span
+                            class="node-title">Development (PSDP)</span><span class="node-value">1,276</span></div>
                 </div>
 
                 <!-- Col 6: Current breakdown -->
                 <div class="sankey-column" style="grid-column:6">
-                    <div class="sankey-node" id="node-interest" data-value="8500" data-stream="federal-current"><span
-                            class="node-title">Interest Payments</span><span class="node-value">8,500</span></div>
-                    <div class="sankey-node" id="node-defense" data-value="2800" data-stream="federal-current"><span
-                            class="node-title">Defence</span><span class="node-value">2,800</span></div>
-                    <div class="sankey-node" id="node-pension" data-value="1100" data-stream="federal-current"><span
-                            class="node-title">Pension</span><span class="node-value">1,100</span></div>
-                    <div class="sankey-node" id="node-grants" data-value="2000" data-stream="federal-current"><span
-                            class="node-title">Grants & Transfers</span><span class="node-value">2,000</span></div>
-                    <div class="sankey-node" id="node-subsidies" data-value="1200" data-stream="federal-current"><span
-                            class="node-title">Subsidies</span><span class="node-value">1,200</span></div>
-                    <div class="sankey-node" id="node-running-gov" data-value="1000" data-stream="federal-current"><span
-                            class="node-title">Running of Govt</span><span class="node-value">1,000</span></div>
-                    <div class="sankey-node" id="node-emergencies" data-value="300" data-stream="federal-current"><span
-                            class="node-title">Emergencies</span><span class="node-value">300</span></div>
-                    <div class="sankey-node" id="node-psdp" data-value="1300" data-stream="federal-dev"><span
-                            class="node-title">Federal PSDP</span><span class="node-value">1,300</span></div>
-                    <div class="sankey-node" id="node-lending" data-value="300" data-stream="federal-dev"><span
-                            class="node-title">Net Lending</span><span class="node-value">300</span></div>
+                    <div class="sankey-node" id="node-interest" data-value="8054" data-stream="federal-current"><span
+                            class="node-title">Interest Payments</span><span class="node-value">8,054</span></div>
+                    <div class="sankey-node" id="node-defense" data-value="3000" data-stream="federal-current"><span
+                            class="node-title">Defence</span><span class="node-value">3,000</span></div>
+                    <div class="sankey-node" id="node-pension" data-value="1169" data-stream="federal-current"><span
+                            class="node-title">Pension</span><span class="node-value">1,169</span></div>
+                    <div class="sankey-node" id="node-grants" data-value="2680" data-stream="federal-current"><span
+                            class="node-title">Grants & Transfers</span><span class="node-value">2,680</span></div>
+                    <div class="sankey-node" id="node-subsidies" data-value="1091" data-stream="federal-current"><span
+                            class="node-title">Subsidies</span><span class="node-value">1,091</span></div>
+                    <div class="sankey-node" id="node-running-gov" data-value="1071" data-stream="federal-current"><span
+                            class="node-title">Running of Govt</span><span class="node-value">1,071</span></div>
+                    <div class="sankey-node" id="node-emergencies" data-value="430" data-stream="federal-current"><span
+                            class="node-title">Emergencies</span><span class="node-value">430</span></div>
+                    <div class="sankey-node" id="node-psdp" data-value="1000" data-stream="federal-dev"><span
+                            class="node-title">Federal PSDP</span><span class="node-value">1,000</span></div>
+                    <div class="sankey-node" id="node-lending" data-value="276" data-stream="federal-dev"><span
+                            class="node-title">Net Lending</span><span class="node-value">276</span></div>
                 </div>
             </div>
-        </div>
-
-        <!-- ═══════════════════ SECTION 7 · GENDER-SENSITIVE SLOPE ═══════════════ -->
-        <div class="card mt-8 reveal delay-100">
-            <div class="sec-title">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-400" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M12 12a4 4 0 100-8 4 4 0 000 8z" />
-                </svg>
-                Gender-Sensitive Allocation Shift
-                <span class="badge">Slope Chart</span>
-            </div>
-            <p class="text-slate-400 text-sm -mt-3 mb-6">Comparative view of gender-sensitive budget allocations as
-                share of total expenditure.</p>
-            <div class="grid grid-cols-[auto_1fr_auto] items-center gap-5" id="slope-chart-host"></div>
         </div>
 
         <!-- ═══════════════════ SECTION 8 · TAX SLABS ════════════════════════ -->
@@ -944,7 +867,143 @@
                 Income Tax Slabs Comparison
                 <span class="badge">FY 2025-26 → 2026-27</span>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" id="tax-slab-container"></div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3" id="tax-slab-container">
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 9 · FBR REVENUE GROWTH ════════════════ -->
+        <div class="card mt-8 reveal delay-0">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                FBR Revenue Growth Trajectory
+                <span class="badge">3-Year Trend</span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div>
+                    <div class="grid grid-cols-2 gap-4" id="fbr-kpi-grid"></div>
+                    <div class="mt-6 p-4 rounded-xl border border-slate-700/50 bg-slate-900/30">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-2">Key Highlights</p>
+                        <ul class="space-y-2 text-sm text-slate-300">
+                            <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">▲</span> GDP-to-Tax ratio grew from <strong class="text-white">8.5%</strong> (2022-23) to <strong class="text-white">10.3%</strong></li>
+                            <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">▲</span> FBR Revenue Growth <strong class="text-white">17.6% YoY</strong></li>
+                            <li class="flex items-start gap-2"><span class="text-sky-400 mt-0.5">→</span> Provincial share (NFC): <strong class="text-white">Rs 8,848 Billion</strong></li>
+                            <li class="flex items-start gap-2"><span class="text-sky-400 mt-0.5">→</span> Federal Net Revenue: <strong class="text-white">Rs 11,751 Billion</strong></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="h-80"><canvas id="fbrRevenueChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 10 · PSDP BREAKDOWN ═══════════════════ -->
+        <div class="card mt-8 reveal delay-100">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                PSDP Development Programme
+                <span class="badge">FY 2026-27</span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div class="h-72"><canvas id="psdpPieChart"></canvas></div>
+                <div>
+                    <div class="grid grid-cols-2 gap-4" id="psdp-kpi-grid"></div>
+                    <div class="mt-4 p-4 rounded-xl border border-emerald-500/20 bg-emerald-900/10">
+                        <p class="text-xs text-emerald-400 uppercase tracking-widest mb-1 font-bold">New PSDP Projects</p>
+                        <p class="text-2xl font-extrabold text-white">18 <span class="text-sm text-slate-400 font-normal">new projects worth</span> Rs 451 Bn</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 11 · SECTORAL PSDP ALLOCATIONS ════════ -->
+        <div class="card mt-8 reveal delay-200">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                Sectoral PSDP Allocations
+                <span class="badge">Horizontal Bar Chart</span>
+            </div>
+            <div class="h-[500px]"><canvas id="sectoralPsdpChart"></canvas></div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 12 · PUBLIC DEBT & EXTERNAL ═══════════ -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <!-- Public Debt -->
+            <div class="card reveal delay-0">
+                <div class="sec-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Public Debt Profile
+                </div>
+                <div class="space-y-4" id="debt-stats-grid"></div>
+            </div>
+            <!-- External Accounts -->
+            <div class="card reveal delay-100">
+                <div class="sec-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-400" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    External Accounts
+                </div>
+                <div class="space-y-4" id="external-stats-grid"></div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 13 · SOCIAL PROGRAMS ══════════════════ -->
+        <div class="card mt-8 reveal delay-0">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Key Social Programs
+                <span class="badge">FY 2026-27</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="social-programs-grid"></div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 14 · DIGITAL ECONOMY ══════════════════ -->
+        <div class="card mt-8 reveal delay-100">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-violet-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Digital Economy & IT
+                <span class="badge">Highlights</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="digital-economy-grid"></div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 15 · SALARY & PENSION ════════════════ -->
+        <div class="card mt-8 reveal delay-200">
+            <div class="sec-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Salary, Pension & Wage Increases
+                <span class="badge">FY 2026-27</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6" id="salary-pension-grid"></div>
         </div>
 
     </div><!-- /max-w-7xl -->
@@ -953,7 +1012,7 @@
         /* ════════════════════════════════════════════════════════════════════
            ██████████████   EDIT THESE DATA OBJECTS AFTER BUDGET  ████████████
            ════════════════════════════════════════════════════════════════════
-           All dummy numbers are clearly labelled.
+           
            Once the FY 2026-27 budget is announced:
              1. Replace values in MACRO_DATA (fy2627 column + delta)
              2. Update FOUR_D_COMPONENTS with actual sub-items
@@ -966,37 +1025,45 @@
         // ─── 1. MACRO SNAPSHOT TABLE ─────────────────────────────────────────────
         const MACRO_DATA = [
             // Core Indicators
-            { label: "GDP Growth (%)", fy2425: "2.5%", fy2526: "3.0%", fy2627: "DUMMY 4.5%", delta: "+1.5pp", dir: "up", isGroup: false },
-            { label: "GDP Per Capita (USD)", fy2425: "1,523", fy2526: "1,581", fy2627: "DUMMY 1,650", delta: "+4.4%", dir: "up", isGroup: false },
-            { label: "CPI Inflation (%)", fy2425: "23.4%", fy2526: "12.0%", fy2627: "DUMMY 9.5%", delta: "−2.5pp", dir: "up", isGroup: false },
-            { label: "Unemployment (%)", fy2425: "6.3%", fy2526: "6.0%", fy2627: "DUMMY 5.7%", delta: "−0.3pp", dir: "up", isGroup: false },
-            { label: "PKR / USD (avg)", fy2425: "278", fy2526: "282", fy2627: "DUMMY 285", delta: "+1.1%", dir: "neu", isGroup: false },
+            { label: "GDP - Rs billion", fy2425: "105,290", fy2526: "114,039", fy2627: "126,870", delta: "+11.2%", dir: "up", isGroup: false },
+            { label: "US $ billion", fy2425: "372.1", fy2526: "408.2", fy2627: "452.1", delta: "+10.8%", dir: "up", isGroup: false },
+            { label: "GDP Growth Rate", fy2425: "2.6%", fy2526: "3.2%", fy2627: "3.7%", delta: "+0.5pp", dir: "up", isGroup: false },
+            { label: "Agri Growth Rate", fy2425: "6.4%", fy2526: "1.5%", fy2627: "2.9%", delta: "+1.4pp", dir: "up", isGroup: false },
+            { label: "Manufacturing Growth Rate", fy2425: "3.0%", fy2526: "2.0%", fy2627: "6.6%", delta: "+4.6pp", dir: "up", isGroup: false },
+            { label: "Service Sector Growth Rate", fy2425: "2.3%", fy2526: "3.1%", fy2627: "4.1%", delta: "+1.0pp", dir: "up", isGroup: false },
+            { label: "CPI", fy2425: "23.4%", fy2526: "4.5%", fy2627: "6.2%", delta: "+1.7pp", dir: "down", isGroup: false },
+            { label: "Unemployment Rate", fy2425: "-", fy2526: "7.1%", fy2627: "-", delta: "—", dir: "neu", isGroup: false },
 
-            // Deficits Group
-            { label: "Fiscal Deficit (% GDP)", fy2425: "7.4%", fy2526: "5.9%", fy2627: "DUMMY 4.5%", delta: "−1.4pp", dir: "up", isGroup: true, groupHeader: "Deficits" },
-            { label: "Trade Deficit (USD Bn)", fy2425: "24.2", fy2526: "22.0", fy2627: "DUMMY 20.0", delta: "−9.1%", dir: "up", isGroup: true },
-            { label: "Current Account (USD Bn)", fy2425: "−0.7", fy2526: "−1.0", fy2627: "DUMMY −1.5", delta: "−0.5", dir: "down", isGroup: true },
-            { label: "BoP Deficit (USD Bn)", fy2425: "−1.2", fy2526: "−1.8", fy2627: "DUMMY −2.0", delta: "−0.2", dir: "down", isGroup: true },
+            // Deficits & Fiscal
+            { label: "Total Revenue (% GDP)", fy2425: "12.6%", fy2526: "15.8%", fy2627: "11.7%", delta: "−4.1pp", dir: "down", isGroup: true, groupHeader: "Fiscal Side" },
+            { label: "Tax Revenue (% GDP)", fy2425: "9.6%", fy2526: "11.2%", fy2627: "8.0%", delta: "−3.2pp", dir: "down", isGroup: true },
+            { label: "Non-Tax Revenue (% GDP)", fy2425: "3.0%", fy2526: "4.6%", fy2627: "3.7%", delta: "−0.9pp", dir: "down", isGroup: true },
+            { label: "Total Expenditure (% GDP)", fy2425: "19.4%", fy2526: "21.2%", fy2627: "12.3%", delta: "−8.9pp", dir: "up", isGroup: true },
+            { label: "Current Exp (% GDP)", fy2425: "17.6%", fy2526: "18.9%", fy2627: "11.2%", delta: "−7.7pp", dir: "up", isGroup: true },
+            { label: "Defence (% GDP)", fy2425: "1.8%", fy2526: "1.9%", fy2627: "1.3%", delta: "−0.6pp", dir: "up", isGroup: true },
+            { label: "Development Exp (% GDP)", fy2425: "1.9%", fy2526: "2.6%", fy2627: "1.5%", delta: "−1.1pp", dir: "down", isGroup: true },
+            { label: "Markup Payments (% GDP)", fy2425: "7.7%", fy2526: "7.8%", fy2627: "3.9%", delta: "−3.9pp", dir: "up", isGroup: true },
+            { label: "Others (% GDP)", fy2425: "8.1%", fy2526: "9.2%", fy2627: "6.0%", delta: "−3.2pp", dir: "up", isGroup: true },
+            { label: "Overall Deficit", fy2425: "7.7%", fy2526: "7.8%", fy2627: "3.9%", delta: "−3.9pp", dir: "up", isGroup: true },
+            { label: "Current Account Deficit", fy2425: "0.6", fy2526: "+0.5", fy2627: "+0.02", delta: "−0.48", dir: "up", isGroup: true },
+            { label: "Trade Deficit", fy2425: "6.0%", fy2526: "6.6%", fy2627: "8.5%", delta: "+1.9pp", dir: "down", isGroup: true },
         ];
 
         // ─── 2. KEY DIRECTIVES ───────────────────────────────────────────────────
         const DIRECTIVES = [
-            { icon: "➔", title: "Total Outlay", body: "DUMMY — Set at <strong class='text-sky-300'>Rs 18.5 Tr</strong>, reflecting consolidation alongside expanded development spending." },
-            { icon: "➔", title: "Digital Expansion", body: "Continued AI-driven tax filing reform; broadened e-filing mandate to retailers and real-estate." },
-            { icon: "➔", title: "New Levies", body: "DUMMY — Revised petroleum levy ceiling and carbon fee introduced on high-emission industries." },
-            { icon: "➔", title: "Employee Relief", body: "DUMMY — Salaries increased by <strong class='text-green-400'>12%</strong>, pensions by <strong class='text-green-400'>9%</strong>." },
-            { icon: "➔", title: "PSDP Boost", body: "DUMMY — Development allocation raised by 25% compared to FY 2025-26 revised estimates." },
+            { icon: "➤", title: "Total Outlay", body: "Set at <strong class='text-sky-300'>Rs 18,711 Billion</strong>, reflecting consolidation alongside expanded development spending." },
+            { icon: "➤", title: "Total Revenue", body: "Expected at <strong class='text-sky-300'>Rs 24,612 Billion</strong> — Tax Revenue Rs 15,264 Bn, Non-Tax Rs 5,336 Bn, Privatization Rs 4,012 Bn." },
+            { icon: "➔", title: "Employee Relief", body: "Salaries & Pensions increased by <strong class='text-green-400'>7%</strong>." },
+            { icon: "➤", title: "PSDP", body: "Federal PSDP allocation set at <strong class='text-red-400'>Rs 1,000 Billion</strong>. Net Lending at Rs 276 Billion." },
+            { icon: "➔", title: "Taxation", body: "Revision in tax slabs to provide relief to general public." },
         ];
 
         // ─── 3. CHALLENGES ───────────────────────────────────────────────────────
         const CHALLENGES = [
-            { title: "Debt Servicing", body: "Interest payments consume ~46% of federal budget, crowding out development." },
-            { title: "Tax Base Narrowness", body: "Only ~4 million active filers in a country of 230 million." },
-            { title: "Structural Deficit", body: "Persistent gap between revenue and expenditure requires chronic borrowing." },
-            { title: "Inflation Legacy", body: "Although declining, residual inflation continues to erode real wages." },
-            { title: "IMF Conditionalities", body: "Programme benchmarks constrain fiscal space for social spending." },
-            { title: "Pension Overhang", body: "Pension bill exceeds salary bill — actuarial reform overdue." },
             { title: "Enforcement Gap", body: "Policy implementation remains weak, reducing effective tax collection." },
+            { title: "IMF Conditionalities", body: "Programme benchmarks constrain fiscal space for social spending." },
+            { title: "Inflation", body: "Increased inflation continues to erode real wages." },
+            { title: "Structural Deficit", body: "Persistent gap between revenue and expenditure requires chronic borrowing." },
         ];
 
         // ─── 4. FOUR Ds OF EXPENDITURE (Auto-calculated from Sub-components) ─────
@@ -1005,22 +1072,22 @@
             debt: {
                 label: "Debt Interest", color: "#f87171",
                 fy2526: { "Interest Payments": 7300, "Pension": 907 },
-                fy2627: { "Interest Payments": 7400, "Pension": 1100 } // DUMMY
+                fy2627: { "Interest Payments": 8054 }
             },
             defence: {
                 label: "Defence", color: "#60a5fa",
                 fy2526: { "Defence Budget": 2550 },
-                fy2627: { "Defence Budget": 2800 } // DUMMY
+                fy2627: { "Defence Budget": 3000 }
             },
             dayToDay: {
                 label: "Day-to-Day Govt", color: "#818cf8",
                 fy2526: { "Current Expenditure": 526, "Grants": 1100, "Subsidies": 400 },
-                fy2627: { "Current Expenditure": 600, "Grants": 1000, "Subsidies": 500 } // DUMMY
+                fy2627: { "Pension": 1169, "Running of Civil Govt": 1071, "Emergency & Others": 430 }
             },
             development: {
                 label: "Development", color: "#4ade80",
                 fy2526: { "PSDP": 3114 },
-                fy2627: { "PSDP": 3900 } // DUMMY
+                fy2627: { "Grants": 2680, "Subsidies": 1091 }
             }
         };
 
@@ -1040,11 +1107,11 @@
 
         // ─── 5. SECTOR ALLOCATIONS ───────────────────────────────────────────────
         const SECTOR_DATA = [
-            { label: "Defence", color: "#60a5fa", fy2526: 2550, fy2627: 2800 },
-            { label: "Social Protection", color: "#4ade80", fy2526: 878, fy2627: 1000 },
-            { label: "Economic Affairs", color: "#fbbf24", fy2526: 1200, fy2627: 1350 },
-            { label: "Education", color: "#c084fc", fy2526: 1400, fy2627: 1600 },
-            { label: "Health", color: "#f87171", fy2526: 500, fy2627: 590 },
+            { label: "Defence", color: "#60a5fa", fy2526: 2550, fy2627: 3000 },
+            { label: "Social Protection (BISP)", color: "#4ade80", fy2526: 716, fy2627: 838 },
+            { label: "Economic Affairs", color: "#fbbf24", fy2526: 1200, fy2627: 1350, note: "Not Recorded" },
+            { label: "Education", color: "#c084fc", fy2526: 1400, fy2627: 1600, note: "Not Recorded" },
+            { label: "Health", color: "#f87171", fy2526: 500, fy2627: 590, note: "Not Recorded" },
         ];
 
         // ─── 6. REVENUE FLOW (Flowchart data for BOTH years) ─────────────────────
@@ -1061,10 +1128,10 @@
         };
 
         const REVENUE_FLOW_FY2627 = {
-            total: { label: "Total Revenue", value: "22,120 Bn" },
-            taxTotal: { label: "Tax Revenue", value: "14,900 Bn", color: "#4ade80" },
-            nonTax: { label: "Non-Tax Revenue", value: "5,500 Bn", color: "#fbbf24" },
-            privatiz: { label: "Privatization", value: "100 Bn", color: "#818cf8" },
+            total: { label: "Total Revenue", value: "24,612 Bn" },
+            taxTotal: { label: "Tax Revenue", value: "15,264 Bn", color: "#4ade80" },
+            nonTax: { label: "Non-Tax Revenue", value: "5,336 Bn", color: "#fbbf24" },
+            privatiz: { label: "Privatization", value: "4,012 Bn", color: "#818cf8" },
             direct: { label: "Direct Tax", value: "7,200 Bn", color: "#22c55e", items: ["Income Tax", "Capital Value Tax"] },
             indirect: { label: "Indirect Tax", value: "7,700 Bn", color: "#34d399", items: ["Sales Tax", "Custom Duties", "Federal Excise"] },
             prop: { label: "Property Tax", value: "500 Bn", color: "#a3e635" },
@@ -1072,51 +1139,48 @@
             levies: { label: "Levies", value: "820 Bn", color: "#6ee7b7" },
         };
 
-        // ─── 7. GENDER SLOPE CHART ───────────────────────────────────────────────
-        const SLOPE_DATA = [
-            { label: "Running of Civil Govt", prev: 9.8, curr: 9.2 },
-            { label: "Public Sector Dev", prev: 7.4, curr: 7.0 },
-        ];
+
 
         // ─── 8. TAX SLABS ────────────────────────────────────────────────────────
         const TAX_SLABS = [
             { range: "0 – 0.6 Mn", old: "Zero Tax", neo: "Zero Tax", tag: "No Change", c: "slate" },
             { range: "0.6 – 1.2 Mn", old: "5% Tax", neo: "1% Tax", tag: "Major Relief", c: "green" },
             { range: "1.2 – 2.2 Mn", old: "30k+15%", neo: "6k+11%", tag: "Major Relief", c: "green" },
-            { range: "2.2 – 3.2 Mn", old: "180k+25%", neo: "346k+23%", tag: "Relief", c: "teal" },
-            { range: "3.2 – 4.1 Mn", old: "430k+30%", neo: "616k+30%", tag: "Relief", c: "teal" },
-            { range: "4.1 Mn+", old: "700k+35%", neo: "616k+35%", tag: "Minor Relief", c: "sky" },
+            { range: "2.2 – 3.2 Mn", old: "180k+25%", neo: "20%", tag: "Relief", c: "teal" },
+            { range: "3.2 – 4.1 Mn", old: "430k+30%", neo: "25%", tag: "Relief", c: "teal" },
+            { range: "4.1 – 5.6 Mn", old: "700k+35%", neo: "29%", tag: "Relief", c: "sky" },
+            { range: "5.6 – 7.0 Mn", old: "700k+35%", neo: "32%", tag: "Relief", c: "sky" },
         ];
 
         // ─── SANKEY LINKS (update after budget) ──────────────────────────────────
         const SANKEY_LINKS = [
-            { from: 'node-tax-revenue', to: 'node-total-revenue', value: 14900, color: '#4ade80', stream: 'revenue' },
+            { from: 'node-tax-revenue', to: 'node-total-revenue', value: 15264, color: '#4ade80', stream: 'revenue' },
             { from: 'node-property-tax', to: 'node-total-revenue', value: 500, color: '#a3e635', stream: 'revenue' },
             { from: 'node-civil-admin', to: 'node-total-revenue', value: 300, color: '#86efac', stream: 'revenue' },
             { from: 'node-levies', to: 'node-total-revenue', value: 820, color: '#6ee7b7', stream: 'revenue' },
-            { from: 'node-non-tax-revenue', to: 'node-total-revenue', value: 5500, color: '#4ade80', stream: 'revenue' },
-            { from: 'node-privatization', to: 'node-total-revenue', value: 100, color: '#fbbf24', stream: 'revenue' },
+            { from: 'node-non-tax-revenue', to: 'node-total-revenue', value: 5336, color: '#4ade80', stream: 'revenue' },
+            { from: 'node-privatization', to: 'node-total-revenue', value: 4012, color: '#fbbf24', stream: 'revenue' },
             { from: 'node-domestic-borrow', to: 'node-total-borrowing', value: 6800, color: '#f87171', stream: 'borrowing' },
             { from: 'node-foreign-borrow', to: 'node-total-borrowing', value: 200, color: '#f87171', stream: 'borrowing' },
-            { from: 'node-total-revenue', to: 'node-total-spend', value: 22120, color: '#2dd4bf', stream: 'revenue' },
+            { from: 'node-total-revenue', to: 'node-total-spend', value: 24612, color: '#2dd4bf', stream: 'revenue' },
             { from: 'node-total-borrowing', to: 'node-total-spend', value: 7000, color: '#fb923c', stream: 'borrowing' },
             { from: 'node-total-spend', to: 'node-provinces', value: 9000, color: '#a78bfa', stream: 'provinces' },
-            { from: 'node-total-spend', to: 'node-federal-budget', value: 18500, color: '#c084fc', stream: 'federal' },
+            { from: 'node-total-spend', to: 'node-federal-budget', value: 18711, color: '#c084fc', stream: 'federal' },
             { from: 'node-provinces', to: 'node-punjab', value: 4470, color: '#a78bfa', stream: 'provinces' },
             { from: 'node-provinces', to: 'node-sindh', value: 2240, color: '#a78bfa', stream: 'provinces' },
             { from: 'node-provinces', to: 'node-kpk', value: 1470, color: '#a78bfa', stream: 'provinces' },
             { from: 'node-provinces', to: 'node-baluchistan', value: 820, color: '#a78bfa', stream: 'provinces' },
-            { from: 'node-federal-budget', to: 'node-current-spend', value: 16900, color: '#60a5fa', stream: 'federal-current' },
-            { from: 'node-federal-budget', to: 'node-dev-spend', value: 1600, color: '#34d399', stream: 'federal-dev' },
-            { from: 'node-current-spend', to: 'node-interest', value: 8500, color: '#ef4444', stream: 'federal-current' },
-            { from: 'node-current-spend', to: 'node-defense', value: 2800, color: '#60a5fa', stream: 'federal-current' },
-            { from: 'node-current-spend', to: 'node-pension', value: 1100, color: '#f97316', stream: 'federal-current' },
-            { from: 'node-current-spend', to: 'node-grants', value: 2000, color: '#eab308', stream: 'federal-current' },
-            { from: 'node-current-spend', to: 'node-subsidies', value: 1200, color: '#d946ef', stream: 'federal-current' },
-            { from: 'node-current-spend', to: 'node-running-gov', value: 1000, color: '#8b5cf6', stream: 'federal-current' },
-            { from: 'node-current-spend', to: 'node-emergencies', value: 300, color: '#f43f5e', stream: 'federal-current' },
-            { from: 'node-dev-spend', to: 'node-psdp', value: 1300, color: '#22c55e', stream: 'federal-dev' },
-            { from: 'node-dev-spend', to: 'node-lending', value: 300, color: '#10b981', stream: 'federal-dev' },
+            { from: 'node-federal-budget', to: 'node-current-spend', value: 17495, color: '#60a5fa', stream: 'federal-current' },
+            { from: 'node-federal-budget', to: 'node-dev-spend', value: 1276, color: '#34d399', stream: 'federal-dev' },
+            { from: 'node-current-spend', to: 'node-interest', value: 8054, color: '#ef4444', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-defense', value: 3000, color: '#60a5fa', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-pension', value: 1169, color: '#f97316', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-grants', value: 2680, color: '#eab308', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-subsidies', value: 1091, color: '#d946ef', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-running-gov', value: 1071, color: '#8b5cf6', stream: 'federal-current' },
+            { from: 'node-current-spend', to: 'node-emergencies', value: 430, color: '#f43f5e', stream: 'federal-current' },
+            { from: 'node-dev-spend', to: 'node-psdp', value: 1000, color: '#22c55e', stream: 'federal-dev' },
+            { from: 'node-dev-spend', to: 'node-lending', value: 276, color: '#10b981', stream: 'federal-dev' },
         ];
 
         /* ════════════════════════════════════════════════
@@ -1599,33 +1663,6 @@
             new ResizeObserver(drawSankeyPaths).observe(document.getElementById('sankey-chart-area'));
 
             // ── Slope Chart ───────────────────────────────────────────────
-            const shost = document.getElementById('slope-chart-host');
-            const labelsHtml = SLOPE_DATA.map(d => `<div class="text-sm font-semibold text-slate-300 whitespace-nowrap">${d.label}</div>`).join('<div class="h-16"></div>');
-            const rowsHtml = SLOPE_DATA.map(d => {
-                const isUp = d.curr > d.prev;
-                const fillColor = isUp ? '#4ade80' : '#f87171';
-                return `<div class="slope-row" style="height:110px">
-            <div class="slope-line" style="background:${fillColor}44"></div>
-            <div class="data-dot dot-start" style="background:var(--fy-prev)"><div class="slope-label" style="color:var(--fy-prev)">${d.prev}%</div></div>
-            <div class="data-dot dot-end"   style="background:var(--fy-curr)"><div class="slope-label" style="color:var(--fy-curr)">${d.curr}%</div></div>
-        </div>`;
-            }).join('');
-            const deltaHtml = SLOPE_DATA.map(d => {
-                const diff = (d.curr - d.prev).toFixed(1);
-                const c = +diff > 0 ? 'text-green-400' : 'text-red-400';
-                const arrow = +diff > 0 ? '↑' : '↓';
-                return `<div class="text-sm font-bold ${c} whitespace-nowrap">${arrow} ${Math.abs(+diff)}pp</div>`;
-            }).join('<div class="h-16"></div>');
-            shost.innerHTML = `
-        <div class="flex flex-col gap-14 justify-start pt-8">${labelsHtml}</div>
-        <div>
-            <div class="flex justify-between text-xs text-slate-500 px-[18%] mb-2">
-                <span style="color:var(--fy-prev)">■ FY 2025-26</span>
-                <span style="color:var(--fy-curr)">■ FY 2026-27</span>
-            </div>
-            ${rowsHtml}
-        </div>
-        <div class="flex flex-col gap-14 justify-start pt-8">${deltaHtml}</div>`;
 
             // ── Tax Slabs ────────────────────────────────────────────────
             const sc = document.getElementById('tax-slab-container');
@@ -1639,6 +1676,279 @@
             </div>
             <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${tagColors[s.c]}">${s.tag}</span>
         </div>`;
+            });
+
+            // ══════════════════════════════════════════════════════════════
+            //  NEW SECTIONS — DATA & RENDERING
+            // ══════════════════════════════════════════════════════════════
+
+            // ─── 9. FBR REVENUE GROWTH ────────────────────────────────────
+            const FBR_DATA = [
+                { year: 'FY 2022-23', value: 7200 },
+                { year: 'FY 2025-26', value: 13000 },
+                { year: 'FY 2026-27 (Target)', value: 15264 },
+            ];
+            const fbrKpiGrid = document.getElementById('fbr-kpi-grid');
+            [
+                { label: 'FBR Target', value: 'Rs 15,264 Bn', color: '#4ade80' },
+                { label: 'Non-Tax Revenue', value: 'Rs 5,336 Bn', color: '#fbbf24' },
+                { label: 'Federal Net Revenue', value: 'Rs 11,751 Bn', color: '#38bdf8' },
+                { label: 'NFC to Provinces', value: 'Rs 8,848 Bn', color: '#c084fc' },
+            ].forEach(k => {
+                fbrKpiGrid.innerHTML += `<div class="kpi-card"><p class="kpi-label">${k.label}</p><p class="kpi-value" style="color:${k.color}; font-size:1.4rem;">${k.value}</p></div>`;
+            });
+
+            const fbrCtx = document.getElementById('fbrRevenueChart');
+            if (fbrCtx) {
+                const fbrGrad = fbrCtx.getContext('2d').createLinearGradient(0, 0, 0, 350);
+                fbrGrad.addColorStop(0, 'rgba(74, 222, 128, 0.5)');
+                fbrGrad.addColorStop(1, 'rgba(74, 222, 128, 0.02)');
+                new Chart(fbrCtx, {
+                    type: 'line',
+                    plugins: [ChartDataLabels],
+                    data: {
+                        labels: FBR_DATA.map(d => d.year),
+                        datasets: [{
+                            label: 'FBR Tax Revenue (Rs Billion)',
+                            data: FBR_DATA.map(d => d.value),
+                            borderColor: '#4ade80',
+                            backgroundColor: fbrGrad,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 8,
+                            pointBackgroundColor: '#4ade80',
+                            pointBorderColor: '#080d1a',
+                            pointBorderWidth: 3,
+                            borderWidth: 3,
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { color: '#cbd5e1', font: { size: 11 } } },
+                            datalabels: {
+                                color: '#fff', font: { size: 12, weight: '700', family: "'Montserrat'" },
+                                formatter: v => 'Rs ' + v.toLocaleString() + ' Bn',
+                                anchor: 'end', align: 'top', offset: 10,
+                                backgroundColor: 'rgba(74,222,128,0.15)', borderColor: 'rgba(74,222,128,0.5)',
+                                borderWidth: 1, borderRadius: 6, padding: { top: 4, bottom: 4, left: 8, right: 8 }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                            y: { grid: { color: 'rgba(255,255,255,0.07)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => v.toLocaleString() }, beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            // ─── 10. PSDP BREAKDOWN ───────────────────────────────────────
+            const PSDP_BREAKDOWN = [
+                { label: 'Federal PSDP', value: 1000, color: '#4ade80' },
+                { label: 'Provincial Programs', value: 1000, color: '#38bdf8' },
+                { label: 'SOEs & Other Sources', value: 2224, color: '#fbbf24' },
+            ];
+            const psdpKpiGrid = document.getElementById('psdp-kpi-grid');
+            [
+                { label: 'Total PSDP', value: 'Rs 3,675 Bn', color: '#4ade80' },
+                { label: 'Federal PSDP', value: 'Rs 1,000 Bn', color: '#38bdf8' },
+                { label: 'Provincial', value: 'Rs 1,000 Bn', color: '#c084fc' },
+                { label: 'SOEs & Others', value: 'Rs 2,224 Bn', color: '#fbbf24' },
+            ].forEach(k => {
+                psdpKpiGrid.innerHTML += `<div class="kpi-card"><p class="kpi-label">${k.label}</p><p class="kpi-value" style="color:${k.color}; font-size:1.3rem;">${k.value}</p></div>`;
+            });
+
+            const psdpCtx = document.getElementById('psdpPieChart');
+            if (psdpCtx) {
+                new Chart(psdpCtx, {
+                    type: 'doughnut',
+                    plugins: [ChartDataLabels],
+                    data: {
+                        labels: PSDP_BREAKDOWN.map(d => d.label),
+                        datasets: [{
+                            data: PSDP_BREAKDOWN.map(d => d.value),
+                            backgroundColor: PSDP_BREAKDOWN.map(d => d.color),
+                            borderColor: '#080d1a', borderWidth: 4, hoverOffset: 10,
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '55%',
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#cbd5e1', font: { size: 11 }, padding: 15 } },
+                            datalabels: {
+                                color: '#fff', font: { size: 11, weight: '700', family: "'Montserrat'" },
+                                formatter: (v, ctx) => {
+                                    const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    return 'Rs ' + v.toLocaleString() + '\n(' + ((v / total) * 100).toFixed(0) + '%)';
+                                },
+                            }
+                        }
+                    }
+                });
+            }
+
+            // ─── 11. SECTORAL PSDP ALLOCATIONS ────────────────────────────
+            const SECTORAL_PSDP = [
+                { label: 'Transport & Communications', value: 365 },
+                { label: 'AJK Development', value: 144.9 },
+                { label: 'Energy (Electricity)', value: 116.2 },
+                { label: 'Hydropower & Dams', value: 103.1 },
+                { label: 'N-25 Highway', value: 100 },
+                { label: 'KPK Merged Districts', value: 56 },
+                { label: 'Housing & Urban Dev', value: 54.6 },
+                { label: 'Higher Education', value: 46 },
+                { label: 'Gilgit-Baltistan', value: 44 },
+                { label: 'HEC Budget', value: 34.9 },
+                { label: 'M-6 Motorway', value: 30 },
+                { label: 'Health', value: 25.1 },
+                { label: 'Thar Coal Connectivity', value: 25 },
+                { label: 'Basic & College Edu', value: 22 },
+                { label: 'Dasu Hydropower', value: 15 },
+                { label: 'Diamer-Basha Dam', value: 14 },
+                { label: 'Governance & Justice', value: 13 },
+                { label: 'K-4 Water Supply', value: 10 },
+                { label: 'Industry & Commerce', value: 6.6 },
+                { label: 'AI & Digital/IT', value: 3.6 },
+            ];
+
+            const sectoralCtx = document.getElementById('sectoralPsdpChart');
+            if (sectoralCtx) {
+                const barColors = SECTORAL_PSDP.map((_, i) => {
+                    const hue = 160 + (i * 9);
+                    return `hsla(${hue}, 70%, 55%, 0.85)`;
+                });
+                new Chart(sectoralCtx, {
+                    type: 'bar',
+                    plugins: [ChartDataLabels],
+                    data: {
+                        labels: SECTORAL_PSDP.map(d => d.label),
+                        datasets: [{
+                            label: 'Rs Billion',
+                            data: SECTORAL_PSDP.map(d => d.value),
+                            backgroundColor: barColors,
+                            borderColor: barColors.map(c => c.replace('0.85', '1')),
+                            borderWidth: 1, borderRadius: 4,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: {
+                                color: '#fff', font: { size: 10, weight: '600', family: "'Montserrat'" },
+                                formatter: v => 'Rs ' + v + ' Bn',
+                                anchor: 'end', align: 'right', offset: 4,
+                            }
+                        },
+                        scales: {
+                            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 9 }, callback: v => v + ' Bn' } },
+                            y: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 10 } } }
+                        }
+                    }
+                });
+            }
+
+            // ─── 12. PUBLIC DEBT ──────────────────────────────────────────
+            const DEBT_STATS = [
+                { label: 'Debt-to-GDP (2023)', value: '75%', sub: 'Target: 70.7%', color: '#f87171', icon: '📊' },
+                { label: 'Debt-to-GDP (Current)', value: '68.5%', sub: 'Improved significantly', color: '#4ade80', icon: '📉' },
+                { label: 'Domestic Debt (pre-2023)', value: 'Rs 4,900 Bn', sub: 'Short-term heavy', color: '#fbbf24', icon: '🏦' },
+                { label: 'Avg Maturity', value: '2.8 → 3.8 yrs', sub: 'Improved by 2026', color: '#38bdf8', icon: '📅' },
+                { label: 'Circular Debt Stock', value: 'Rs 1,225 Bn', sub: '', color: '#f87171', icon: '⚡' },
+                { label: 'IPP Savings', value: 'Rs 3.7 Trillion', sub: 'Circular debt negotiations', color: '#4ade80', icon: '💰' },
+                { label: 'Electricity Subsidy Cut', value: 'Rs 143 Bn', sub: 'Reduction in FY 2025-26', color: '#fbbf24', icon: '🔌' },
+            ];
+            const debtGrid = document.getElementById('debt-stats-grid');
+            DEBT_STATS.forEach(d => {
+                debtGrid.innerHTML += `<div class="flex items-center gap-3 p-3 rounded-lg border border-slate-700/40 bg-slate-900/30 hover:border-sky-500/30 transition-all">
+                    <span class="text-2xl">${d.icon}</span>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-400 font-medium">${d.label}</p>
+                        <p class="text-lg font-bold" style="color:${d.color}">${d.value}</p>
+                        ${d.sub ? `<p class="text-[0.65rem] text-slate-500">${d.sub}</p>` : ''}
+                    </div>
+                </div>`;
+            });
+
+            // ─── 12b. EXTERNAL ACCOUNTS ───────────────────────────────────
+            const EXTERNAL_STATS = [
+                { label: 'Foreign Exchange Reserves', value: '$17 Billion', sub: 'Was $4 Billion', color: '#4ade80', icon: '💵' },
+                { label: 'GDP (Current)', value: '~$452 Billion', sub: 'Projected: $1,901 Bn', color: '#38bdf8', icon: '🌐' },
+                { label: 'Per Capita Income', value: '$1,751 → $1,901', sub: '', color: '#c084fc', icon: '👤' },
+                { label: 'Remittances (Current)', value: '$38 Billion', sub: 'Target: $41 Bn', color: '#fbbf24', icon: '💸' },
+                { label: 'Eurobond', value: '$750 Million', sub: '4-year, issued 2022', color: '#818cf8', icon: '📜' },
+                { label: 'Panda Bond', value: 'RMB 75 Mn', sub: '@ 2.5%, 5-year', color: '#f87171', icon: '🐼' },
+                { label: 'LNG Savings', value: '$1.2 Billion', sub: 'New agreement', color: '#4ade80', icon: '⛽' },
+            ];
+            const extGrid = document.getElementById('external-stats-grid');
+            EXTERNAL_STATS.forEach(d => {
+                extGrid.innerHTML += `<div class="flex items-center gap-3 p-3 rounded-lg border border-slate-700/40 bg-slate-900/30 hover:border-teal-500/30 transition-all">
+                    <span class="text-2xl">${d.icon}</span>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-400 font-medium">${d.label}</p>
+                        <p class="text-lg font-bold" style="color:${d.color}">${d.value}</p>
+                        ${d.sub ? `<p class="text-[0.65rem] text-slate-500">${d.sub}</p>` : ''}
+                    </div>
+                </div>`;
+            });
+
+            // ─── 13. SOCIAL PROGRAMS ──────────────────────────────────────
+            const SOCIAL_PROGRAMS = [
+                { title: 'BISP', amount: 'Rs 838 Bn', detail: '17% more than last year', sub: '9.2M households → expanding to 12M', color: '#ec4899', icon: '🏠' },
+                { title: "PM's Housing Scheme", amount: 'Rs 71 Bn', detail: 'Housing for all', sub: '', color: '#f97316', icon: '🏗️' },
+                { title: 'PM Youth Skills (NAVTTC)', amount: 'Rs 7.9 Bn', detail: '515,000 trained', sub: '', color: '#8b5cf6', icon: '🎓' },
+                { title: 'Youth Business/Agri Loans', amount: 'Rs 258 Bn', detail: '534,000 beneficiaries (since 2023)', sub: '', color: '#06b6d4', icon: '💼' },
+                { title: 'Zarnigar (Financial Inclusion)', amount: 'Rs 300 Bn Credit', detail: '750,000 small farmers', sub: '', color: '#22c55e', icon: '🌾' },
+                { title: 'Agri Storage Financing', amount: 'Rs 7.1 Bn', detail: 'Storage facility financing', sub: '', color: '#eab308', icon: '🏭' },
+            ];
+            const socialGrid = document.getElementById('social-programs-grid');
+            SOCIAL_PROGRAMS.forEach(d => {
+                socialGrid.innerHTML += `<div class="p-5 rounded-xl border border-slate-700/50 bg-gradient-to-br from-slate-900/50 to-slate-800/20 hover:border-pink-500/30 transition-all group cursor-default">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">${d.icon}</span>
+                        <div>
+                            <p class="text-sm font-bold text-white">${d.title}</p>
+                            <p class="text-xs text-slate-400">${d.detail}</p>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-extrabold mb-1" style="color:${d.color}">${d.amount}</p>
+                    ${d.sub ? `<p class="text-xs text-slate-500 mt-1">${d.sub}</p>` : ''}
+                </div>`;
+            });
+
+            // ─── 14. DIGITAL ECONOMY ──────────────────────────────────────
+            const DIGITAL_STATS = [
+                { label: 'Banking Users Growth', value: '+95M', color: '#8b5cf6' },
+                { label: 'Digital Merchants', value: '1.67M', color: '#06b6d4' },
+                { label: 'Digital Payments', value: 'Rs 10.1 Tn', color: '#4ade80' },
+                { label: 'G2P Digital', value: '92%', color: '#ec4899' },
+                { label: '5G Spectrum Cities', value: '5', color: '#f97316' },
+                { label: 'IT Exports Growth', value: '20% YoY', color: '#22c55e' },
+                { label: 'IT Exports Projected', value: '$4.5 Bn', color: '#38bdf8' },
+                { label: 'IT Tax Rate (Export)', value: '0.25%', color: '#fbbf24' },
+            ];
+            const digitalGrid = document.getElementById('digital-economy-grid');
+            DIGITAL_STATS.forEach(d => {
+                digitalGrid.innerHTML += `<div class="kpi-card">
+                    <p class="kpi-label">${d.label}</p>
+                    <p class="kpi-value" style="color:${d.color}; font-size:1.6rem;">${d.value}</p>
+                </div>`;
+            });
+
+            // ─── 15. SALARY & PENSION ─────────────────────────────────────
+            const SALARY_DATA = [
+                { label: 'Govt Employee Salary', increase: '7%', color: '#4ade80', icon: '💼' },
+                { label: 'Pension Increase', increase: '7%', color: '#38bdf8', icon: '🏛️' },
+                { label: 'Minimum Wage', increase: '10%', color: '#fbbf24', icon: '👷' },
+            ];
+            const salaryGrid = document.getElementById('salary-pension-grid');
+            SALARY_DATA.forEach(d => {
+                salaryGrid.innerHTML += `<div class="p-6 rounded-xl border border-slate-700/50 bg-gradient-to-br from-slate-900/60 to-slate-800/20 text-center hover:border-sky-500/30 transition-all group">
+                    <span class="text-4xl block mb-3 group-hover:scale-110 transition-transform">${d.icon}</span>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold mb-2">${d.label}</p>
+                    <p class="text-5xl font-black" style="color:${d.color}; text-shadow: 0 0 30px ${d.color}44;">+${d.increase}</p>
+                    <p class="text-xs text-slate-500 mt-2">Increase</p>
+                </div>`;
             });
 
         }); // DOMContentLoaded
