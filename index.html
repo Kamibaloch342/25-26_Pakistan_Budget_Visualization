@@ -603,10 +603,12 @@
                 <div class="text-[0.6rem] sm:text-[0.65rem] text-slate-500 font-medium hidden sm:block">Developed by
                     Center for Evidence Action Research (CEAR)</div>
                 <div class="text-[0.6rem] sm:text-[0.65rem] text-slate-500 font-medium hidden sm:block">
-                    <span class="text-slate-400 font-semibold">Dr. Fareeha Armughan</span> — Research Fellow at SDPI &amp; Head of CEAR
+                    <span class="text-slate-400 font-semibold">Dr. Fareeha Armughan</span> — Research Fellow at SDPI
+                    &amp; Head of CEAR
                 </div>
                 <div class="text-[0.6rem] sm:text-[0.65rem] text-slate-500 font-medium hidden sm:block">
-                    Research Team: Dr. Kamran (Data Analyst) · Iffat Rabab (Economic Research) · Tuba Ilyas (Research Assistant) · Ayesha Chaudhary (Research Assistant)
+                    Research Team: Dr. Kamran (Data Analyst) · Iffat Rabab (Economic Research) · Tuba Ilyas (Research
+                    Assistant) · Ayesha Chaudhary (Research Assistant)
                 </div>
             </div>
         </div>
@@ -730,9 +732,8 @@
                         Inner: FY 2025-26 &nbsp;&nbsp;|&nbsp;&nbsp; Outer: FY 2026-27</p>
                     <canvas id="sectorNestedPie" class="relative z-10"></canvas>
                     <div id="pie-labels-overlay" class="absolute inset-0 pointer-events-none z-30"></div>
-                    <!-- Center Total Display -->
-                    <div
-                        class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0 mt-8">
+                    <!-- Center Total Display (hidden) -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0 mt-8" style="display:none!important">
                         <span class="text-[0.65rem] text-slate-400 font-bold uppercase tracking-widest">Total
                             FY26-27</span>
                         <span class="text-3xl font-extrabold text-white tracking-tight" id="pie-center-total"></span>
@@ -1248,8 +1249,6 @@
                 const totalPrev = SECTOR_DATA.reduce((sum, d) => sum + d.fy2526, 0);
                 const totalCurr = SECTOR_DATA.reduce((sum, d) => sum + d.fy2627, 0);
 
-                // Update Center Text
-                document.getElementById('pie-center-total').innerText = 'Rs ' + totalCurr.toLocaleString() + ' Bn';
 
                 const ctx = document.getElementById('sectorNestedPie').getContext('2d');
 
@@ -1265,48 +1264,71 @@
                     id: 'htmlLabels',
                     afterDraw(chart) {
                         const overlay = document.getElementById('pie-labels-overlay');
-                        overlay.innerHTML = ''; // Clear old labels
+                        overlay.innerHTML = '';
 
                         const meta = chart.getDatasetMeta(0); // Outer ring
+                        const centerX = chart.chartArea.left + chart.chartArea.width / 2;
+                        const centerY = chart.chartArea.top + chart.chartArea.height / 2;
 
+                        // ── Pass 1: collect raw positions ──────────────────
+                        const items = [];
                         meta.data.forEach((arc, i) => {
                             const value = chart.data.datasets[0].data[i];
-                            const pct = ((value / totalCurr) * 100).toFixed(1);
-                            if (pct < 3) return; // Skip tiny slices
-
-                            const label = chart.data.labels[i];
-                            const color = sectorColors[i];
-
-                            // Calculate position outside the arc
+                            const pct  = ((value / totalCurr) * 100).toFixed(1);
                             const angle = (arc.startAngle + arc.endAngle) / 2;
-                            const r = arc.outerRadius + 30; // 30px outside the ring
+                            // push small slices further out so there is room to separate
+                            const slicePct = parseFloat(pct);
+                            const r = arc.outerRadius + (slicePct < 5 ? 70 : 35);
+                            items.push({
+                                x: centerX + Math.cos(angle) * r,
+                                y: centerY + Math.sin(angle) * r,
+                                value, pct,
+                                label: chart.data.labels[i],
+                                color: sectorColors[i]
+                            });
+                        });
 
-                            const centerX = chart.chartArea.left + chart.chartArea.width / 2;
-                            const centerY = chart.chartArea.top + chart.chartArea.height / 2;
+                        // ── Pass 2: iterative overlap resolution ───────────
+                        const MIN_SEP = 68; // px – approximate label height
+                        for (let iter = 0; iter < 80; iter++) {
+                            let moved = false;
+                            for (let a = 0; a < items.length; a++) {
+                                for (let b = a + 1; b < items.length; b++) {
+                                    const dx = items[a].x - items[b].x;
+                                    const dy = items[a].y - items[b].y;
+                                    const dist = Math.sqrt(dx * dx + dy * dy);
+                                    if (dist < MIN_SEP && dist > 0) {
+                                        const push = (MIN_SEP - dist) / 2 + 2;
+                                        const nx = dx / dist;
+                                        const ny = dy / dist;
+                                        items[a].x += nx * push;
+                                        items[a].y += ny * push;
+                                        items[b].x -= nx * push;
+                                        items[b].y -= ny * push;
+                                        moved = true;
+                                    }
+                                }
+                            }
+                            if (!moved) break;
+                        }
 
-                            const x = centerX + Math.cos(angle) * r;
-                            const y = centerY + Math.sin(angle) * r;
-
-                            // Create beautiful HTML Label
+                        // ── Pass 3: render ─────────────────────────────────
+                        items.forEach(({ x, y, value, pct, label, color }) => {
                             const div = document.createElement('div');
                             div.className = 'absolute flex flex-col items-center justify-center backdrop-blur-md shadow-2xl';
-                            div.style.left = x + 'px';
-                            div.style.top = y + 'px';
-                            div.style.transform = 'translate(-50%, -50%)';
-                            div.style.background = 'rgba(8, 13, 26, 0.85)';
-                            div.style.border = `1px solid ${color}66`;
+                            div.style.left  = x + 'px';
+                            div.style.top   = y + 'px';
+                            div.style.transform   = 'translate(-50%, -50%)';
+                            div.style.background  = 'rgba(8, 13, 26, 0.85)';
+                            div.style.border      = `1px solid ${color}66`;
                             div.style.borderRadius = '8px';
-                            div.style.padding = '6px 12px';
-                            div.style.minWidth = 'max-content';
-
-                            // Box shadow glow using the slice color
-                            div.style.boxShadow = `0 8px 20px -4px ${color}33`;
-
+                            div.style.padding     = '6px 12px';
+                            div.style.minWidth    = 'max-content';
+                            div.style.boxShadow   = `0 8px 20px -4px ${color}33`;
                             div.innerHTML = `
-                                <div class="text-[0.65rem] font-bold uppercase tracking-widest mb-1" style="color: ${color}">${label}</div>
+                                <div class="text-[0.65rem] font-bold uppercase tracking-widest mb-1" style="color:${color}">${label}</div>
                                 <div class="text-sm font-extrabold text-white">Rs ${value} Bn <span class="text-xs font-semibold text-slate-400">(${pct}%)</span></div>
                             `;
-
                             overlay.appendChild(div);
                         });
                     }
